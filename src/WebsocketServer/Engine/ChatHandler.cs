@@ -31,12 +31,12 @@ namespace WorldEdit
 
         public IMinecraftCommandService CommandService { get; set; }
 
-        public void Command(string commannd)
+        public void Command(string command)
         {
-            CommandService.Command(commannd);
+            CommandService.Command(command);
         }
 
-        public virtual void HandleMessage(string[] args)
+        public virtual void HandleMessage(IEnumerable<string> args)
         {
         }
     }

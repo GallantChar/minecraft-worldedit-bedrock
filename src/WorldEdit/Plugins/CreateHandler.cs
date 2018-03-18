@@ -14,9 +14,9 @@ namespace WorldEdit
             ChatCommand = "create";
         }
 
-        public override void HandleMessage(string[] args)
+        public override void HandleMessage(IEnumerable<string> args)
         {
-            CreateGeometry(CommandService,args);
+            CreateGeometry(CommandService, args.ToArray());
         }
 
         public static void CreateGeometry(IMinecraftCommandService commandService, params string[] args)

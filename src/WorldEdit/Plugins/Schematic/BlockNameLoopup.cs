@@ -505,6 +505,8 @@ namespace WorldEdit.Schematic
         public static List<BlockLookup> Lookup()
         {
             var output = new List<BlockLookup>();
+
+
             output.Add(new BlockLookup {Id = 0, Name = "air", BeData = 0, JeData = 0, FriendlyName = "Air"});
             output.Add(new BlockLookup {Id = 1, Name = "stone", BeData = 0, JeData = 0, FriendlyName = "Stone"});
             output.Add(new BlockLookup {Id = 1, Name = "stone", BeData = 1, JeData = 1, FriendlyName = "Granite"});
@@ -761,14 +763,7 @@ namespace WorldEdit.Schematic
                 JeData = 2,
                 FriendlyName = "Smooth Sandstone"
             });
-            output.Add(new BlockLookup
-            {
-                Id = 25,
-                Name = "noteblock",
-                BeData = 0,
-                JeData = 0,
-                FriendlyName = "Note Block"
-            });
+            output.Add(new BlockLookup {Id = 25, Name = "noteblock", BeData = 0, JeData = 0, FriendlyName = "Note Block"});
             output.Add(new BlockLookup
             {
                 Id = 26,

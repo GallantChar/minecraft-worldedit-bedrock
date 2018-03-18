@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using MinecraftPluginServer;
@@ -43,7 +44,7 @@ namespace WorldEdit
             ChatCommand = "create";
         }
 
-        public override void HandleMessage(string[] args)
+        public override void HandleMessage(IEnumerable<string> args)
         {
             using (var file = File.AppendText(".\\create.log"))
             {
@@ -62,9 +63,9 @@ namespace WorldEdit
             ChatCommand = "script";
         }
 
-        public override void HandleMessage(string[] args)
+        public override void HandleMessage(IEnumerable<string> args)
         {
-            var lines = File.ReadAllLines($".\\{args[1]}.log");
+            var lines = File.ReadAllLines($".\\{args.FirstOrDefault() ?? "worldedit"}.log");
 
             foreach (var command in lines)
             {

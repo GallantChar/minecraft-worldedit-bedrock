@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using System.Linq;
 using WorldEdit.Schematic;
 
@@ -10,9 +11,10 @@ namespace WorldEdit
             ChatCommand = "schematic";
         }
 
-        public override void HandleMessage(string[] args)
+        public override void HandleMessage(IEnumerable<string> args)
         {
-            new SchematicProcessor(CommandService).SchematicCommandProcessor(args.ToList().Skip(1).ToArray());
+            var position = CommandService.GetLocation();
+            new SchematicProcessor(CommandService).SchematicCommandProcessor(position, args.Skip(1));
         }
     }
 }

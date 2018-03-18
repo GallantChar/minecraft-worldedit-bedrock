@@ -1,4 +1,6 @@
-﻿namespace WorldEdit
+﻿using System.Collections.Generic;
+
+namespace WorldEdit
 {
     public class ThawHandler : ChatHandler
     {
@@ -7,7 +9,7 @@
             ChatCommand = "thaw";
         }
 
-        public override void HandleMessage(string[] args)
+        public override void HandleMessage(IEnumerable<string> args)
         {
             Command("fill ~-15 ~-15 ~-15 ~15 ~15 ~15 water 0 replace ice");
         }

@@ -1,6 +1,9 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
+using System.Configuration;
 using System.IO;
 using System.Linq;
+using System.Text.RegularExpressions;
 using Newtonsoft.Json;
 using WorldEdit.Input;
 
@@ -15,56 +18,134 @@ namespace WorldEdit
             ChatCommand = "pos";
         }
 
-        public override void HandleMessage(string[] args)
+        public override void HandleMessage(IEnumerable<string> args)
         {
-            HandlePositionCommand(RemoveFirstArg(args));
+            HandlePositionCommand(args.Skip(1));
         }
 
-        private static string[] RemoveFirstArg(string[] args)
+        private void HandlePositionCommand(IEnumerable<string> args)
         {
-            return args.ToList().Skip(1).ToArray();
-        }
-
-        private void HandlePositionCommand(string[] commandArgs)
-        {
-            var name = commandArgs.Length > 1 ? commandArgs[1] : "";
-            switch (commandArgs[0])
+            var name = args.ElementAtOrDefault(1);
+            switch (args.ElementAtOrDefault(0))
             {
                 case "add":
-                    var position = CommandService.GetLocation();
-                    SavedPositions.Positions.Add(new SavedPosition {Position = position, Name = name});
-                    CommandService.Status($"saved postition {name} at {position}");
+                    CommandAdd(name);
                     break;
                 case "list":
-                    if (SavedPositions.Positions.Any())
-                        CommandService.Status("Positions: " +
-                                              SavedPositions.Positions.Select(b => $"\n{b.Name} at {b.Position}")
-                                                  .Aggregate((a, b) => a += b));
-                    else
-                        CommandService.Status("No saved positions.");
-
+                    CommandList(args.ElementAtOrDefault(2));
                     break;
                 case "remove":
-                    var posToDelete = SavedPositions.Positions.SingleOrDefault(a => a.Name.Equals(name));
-                    if (posToDelete != null)
-                    {
-                        SavedPositions.Positions.Remove(posToDelete);
-                        CommandService.Status($"removed position {posToDelete.Name}");
-                    }
+                    CommandRemove(name);
                     break;
                 case "save":
-                    var json = JsonConvert.SerializeObject(SavedPositions.Positions);
-                    File.WriteAllText("SavedPositions.json", json);
+                    CommandSave(args.ElementAtOrDefault(2));
                     break;
                 case "load":
-                    if (File.Exists("savedpositions.json"))
-                    {
-                        var jsonstring = File.ReadAllText("savedpositions.json");
-                        SavedPositions.Positions.AddRange(
-                            JsonConvert.DeserializeObject<List<SavedPosition>>(jsonstring));
-                    }
+                    CommandLoad(args.ElementAtOrDefault(2));
                     break;
             }
+        }
+
+        private void CommandLoad(string filename)
+        {
+            try
+            {
+                filename = GetPositionFileName(filename);
+
+                if (!File.Exists(filename)) return;
+
+                SavedPositions.Positions.AddRange(
+                    JsonConvert.DeserializeObject<List<SavedPosition>>(File.ReadAllText(filename)));
+
+                CommandService.Status("Positions loaded.");
+            }
+            catch(Exception ex)
+            {
+                CommandService.Status("There was a problem loading the saved positions.");
+            }
+        }
+
+        private string GetPositionFileName(string filename)
+        {
+            var autoCreate = false;
+            var positionFolder = Path.GetFullPath(ConfigurationManager.AppSettings["positions"]);
+            if (!Directory.Exists(positionFolder))
+            {
+                Directory.CreateDirectory(positionFolder);
+            }
+
+            if (String.IsNullOrEmpty(filename))
+            {
+                filename = "saved.json";
+                autoCreate = true;
+            }
+            else
+            {
+                filename = new Regex($"[{Path.GetInvalidFileNameChars()}]").Replace(filename, "");
+                if (!filename.EndsWith(".json")) filename += ".json";
+            }
+
+            var files = Directory.GetFiles(positionFolder, filename);
+
+            if (files.Any()) return Path.GetFullPath(files[0]);
+            if (autoCreate)
+            {
+                File.Create(filename).Close();
+                return Path.Combine(positionFolder, filename);
+            }
+            CommandService.Status($"Unable to locate position file: {filename}");
+            return null;
+        }
+
+        private void CommandSave(string filename)
+        {
+            filename = GetPositionFileName(filename);
+            var json = JsonConvert.SerializeObject(SavedPositions.Positions);
+            File.WriteAllText(filename, json);
+
+            CommandService.Status("Positions saved.");
+        }
+
+        private void CommandRemove(string name)
+        {
+            var posToDelete = SavedPositions.Positions.SingleOrDefault(a => a.Name.Equals(name));
+            if (posToDelete != null)
+            {
+                SavedPositions.Positions.Remove(posToDelete);
+                CommandService.Status($"Removed position {posToDelete.Name}.");
+            }
+        }
+
+        private void CommandList(string arg)
+        {
+            if ("files".Equals(arg, StringComparison.InvariantCultureIgnoreCase))
+            {
+                CommandListFiles();
+            }
+
+            if (SavedPositions.Positions.Any())
+                CommandService.Status("Positions: " +
+                                      SavedPositions.Positions.Select(b => $"\n{b.Name} at {b.Position}")
+                                          .Aggregate((a, b) => a += b));
+            else
+                CommandService.Status("No saved positions.");
+        }
+
+        private void CommandListFiles()
+        {
+            CommandService.Status("No saved positions.");
+            var files = Directory.GetFiles(ConfigurationManager.AppSettings["positions"], "*.json");
+
+            CommandService
+                .Status("Saved Position Files: \n" +
+                        String.Join("\n", files.Select(Path.GetFileNameWithoutExtension).OrderBy(a => a)));
+        }
+
+        private void CommandAdd(string name)
+        {
+            var position = CommandService.GetLocation();
+            SavedPositions.Positions.Add(new SavedPosition {Position = position, Name = name});
+            CommandService.Status($"Saved postition {name} at {position}.");
         }
     }
 }
