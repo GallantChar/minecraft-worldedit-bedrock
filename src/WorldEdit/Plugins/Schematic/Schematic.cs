@@ -14,6 +14,7 @@ namespace WorldEdit.Schematic
         public string Materials { get; set; }
         public byte[] BlockIds { get; set; }
         public byte[] AddBlock { get; set; }
+        public List<NbtCompound> TileEntities { get; set; }
 
         public List<Point> GetPoints()
         {
@@ -39,7 +40,8 @@ namespace WorldEdit.Schematic
                             X = x,
                             Y = y,
                             Z = z,
-                            SortOrder = blockLookup.SortOrder
+                            SortOrder = blockLookup.SortOrder,
+                            Tag = TileEntities.ElementAtOrDefault(index)
                         });
                     }
 
@@ -66,8 +68,8 @@ namespace WorldEdit.Schematic
             output.Length = schematicFile.RootTag.Get<NbtShort>("Length").Value;
             output.BlockIds = schematicFile.RootTag.Get<NbtByteArray>("Blocks").Value;
             output.Data = schematicFile.RootTag.Get<NbtByteArray>("Data").Value;
-
             output.Materials = schematicFile.RootTag.Get<NbtString>("Materials").Value;
+            output.TileEntities = schematicFile.RootTag.Get<NbtList>("TileEntities").Select(a => (NbtCompound) a).ToList();
 
             var nbtByteArray = schematicFile.RootTag.Get<NbtByteArray>("AddBlocks");
             if (nbtByteArray != null)

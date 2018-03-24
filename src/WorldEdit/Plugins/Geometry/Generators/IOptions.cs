@@ -1,8 +1,7 @@
 ﻿namespace ShapeGenerator
 {
-    public interface ISphereOptions
+    interface IOptions
     {
-        int Radius { get; set; }
         int X { get; set; }
         int Z { get; set; }
         int Y { get; set; }

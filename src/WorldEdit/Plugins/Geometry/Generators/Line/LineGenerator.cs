@@ -1,50 +1,49 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace ShapeGenerator.Generators
 {
-    public class LineGenerator : IGenerator
+    public class LineGenerator : Generator, IGenerator
     {
-        private const double ToleranceToFindPoint = 0.010;
-
-        public List<Line> TransformToLines(List<Point> points, Options options)
-        {
-            return SphereGenerator.LinesFromPoints(points, options);
-        }
-
+        private const double ToleranceToFindPoint = 0.01;
         List<Line> IGenerator.Run(Options options)
         {
             return TransformToLines(Run(options), options);
         }
 
-        public List<Point> Run(Options options)
+        public List<Point> Run(ILineOptions options)
         {
             var opt = (ILineOptions) options;
+            
+            return DrawLine(opt.Start, opt.End);
+        }
+
+        public static List<Point> DrawLine(Point start, Point end)
+        {
             var points = new List<Point>();
+            points.Add(start);
+            points.Add(end);
 
-            var lowerX = Math.Min(opt.Start.X, opt.End.X);
-            var lowerY = Math.Min(opt.Start.Y, opt.End.Y);
-            var lowerZ = Math.Min(opt.Start.Z, opt.End.Z);
+            Stack<Point[]> stack = new Stack<Point[]>();
+            stack.Push(new[] {start, end});
+            do
+            {
+                var p = stack.Pop();
+                var delta = p[1].Subtract(p[0]);
 
-            var upperX = Math.Max(opt.Start.X, opt.End.X);
-            var upperY = Math.Max(opt.Start.Y, opt.End.Y);
-            var upperZ = Math.Max(opt.Start.Z, opt.End.Z);
+                if (Math.Abs(delta.X) < 2 && Math.Abs(delta.Y) < 2 && Math.Abs(delta.Z) < 2) continue;
 
-            var x1 = opt.Start.X;
-            var y1 = opt.Start.Y;
-            var z1 = opt.Start.Z;
-            var x2 = opt.End.X;
-            var y2 = opt.End.Y;
-            var z2 = opt.End.Z;
+                var midPoint = Point.MidPoint(p[0], p[1], delta);
+                points.Add(midPoint);
+                stack.Push(new[] {p[0], midPoint});
+                stack.Push(new[] {midPoint, p[1]});
+            } while (stack.Any());
 
-            for (var x = lowerX; x <= upperX; x++)
-                for (var y = lowerY; y <= upperY; y++)
-                    for (var z = lowerZ; z <= upperZ; z++)
-                        if (PointLiesOnLine(x1, y1, z1, x2, y2, z2, x, y, z))
-                            points.Add(new Point {X = x, Y = y, Z = z});
             return points;
         }
 
+        /*
         private static bool PointLiesOnLine(int x1, int y1, int z1, int x2, int y2, int z2, int x, int y, int z)
         {
             var AB = Math.Sqrt((x2 - x1)*(x2 - x1) + (y2 - y1)*(y2 - y1) + (z2 - z1)*(z2 - z1));
@@ -55,5 +54,6 @@ namespace ShapeGenerator.Generators
                 return true;
             return false;
         }
+        */
     }
 }

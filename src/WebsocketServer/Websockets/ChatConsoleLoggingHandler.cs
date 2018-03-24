@@ -4,7 +4,7 @@ using MinecraftPluginServer.Protocol.Response;
 
 namespace MinecraftPluginServer
 {
-    public class ChatConsoleLoggingHandler : IGameEventHander
+    public class ChatConsoleLoggingHandler : IGameEventHandler
     {
         public List<GameEvent> CanHandle()
         {

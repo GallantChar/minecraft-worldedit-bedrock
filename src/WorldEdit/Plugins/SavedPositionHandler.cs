@@ -16,6 +16,7 @@ namespace WorldEdit
         public SavedPositionHandler()
         {
             ChatCommand = "pos";
+            ChatCommandDescription = "Used to save and list positions. Type pos help for more details.";
         }
 
         public override void HandleMessage(IEnumerable<string> args)
@@ -43,7 +44,52 @@ namespace WorldEdit
                 case "load":
                     CommandLoad(args.ElementAtOrDefault(2));
                     break;
+                case "help":
+                    CommandHelp(args.ElementAtOrDefault(2));
+                    break;
+               
             }
+        }
+
+        private void CommandHelp(string subcommand)
+        {
+            switch (subcommand.ToLowerInvariant())
+            {
+                case "add":
+                    CommandService.Status("pos add [name]: saves a new poisition with the specified [name]");
+                    CommandService.Status("Type \"pos help\" for a complete list of saved positions \"pos\" commands.");
+                    break;
+                case "list":
+                    CommandService.Status("pos list: list saved poisitions");
+                    CommandService.Status("Type \"pos help\" for a complete list of saved positions \"pos\" commands.");
+                    break;
+                case "remove":
+                    CommandService.Status("pos remove [name]: remove a saved position with [name]");
+                    CommandService.Status("Type \"pos help\" for a complete list of saved positions \"pos\" commands.");
+                    break;
+                case "save":
+                    CommandService.Status("pos save [name]: saves the list of positions to [name] file");
+                    CommandService.Status("Type \"pos help\" for a complete list of saved positions \"pos\" commands.");
+                    break;
+                case "load":
+                    CommandService.Status("pos load [name]: loads the list of positions from [name] file");
+                    CommandService.Status("Type \"pos help\" for a complete list of saved positions \"pos\" commands.");
+                    break;
+                case "help":
+                    CommandService.Status("pos help: shows the saved positions \"pos\" help");
+                    break;
+                default:
+                    CommandService.Status("pos commands:");
+                    CommandService.Status("pos add [name]: saves a new poisition with the specified [name]");
+                    CommandService.Status("pos list: list saved poisitions");
+                    CommandService.Status("pos remove [name]: remove a saved position with [name]");
+                    CommandService.Status("pos save [name]: saves the list of positions to [name] file");
+                    CommandService.Status("pos load [name]: loads the list of positions from [name] file");
+                    CommandService.Status("pos help: shows this list of commands");
+                    break;
+            }
+
+            throw new NotImplementedException();
         }
 
         private void CommandLoad(string filename)
@@ -62,6 +108,7 @@ namespace WorldEdit
             catch(Exception ex)
             {
                 CommandService.Status("There was a problem loading the saved positions.");
+                // TODO: Log Error.
             }
         }
 

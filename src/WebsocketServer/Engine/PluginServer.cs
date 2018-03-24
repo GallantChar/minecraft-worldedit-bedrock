@@ -12,9 +12,19 @@ namespace WorldEdit
     {
         private static bool keepRunning = true;
         private IMinecraftCommandService minecraftService;
-        private List<IGameEventHander> GameHandlers { get; } = new List<IGameEventHander>();
+        private List<IGameEventHandler> GameHandlers { get; } = new List<IGameEventHandler>();
         private List<IHotkeyHandler> HotkeyHandlers { get; } = new List<IHotkeyHandler>();
 
+
+        public string CommandList
+        {
+            get
+            {
+                return String.Join("",
+                    GameHandlers.Where(a => a is ChatHandler).Select(h => String.Format("{0,-13}  {1}\n",
+                        ((ChatHandler) h).ChatCommand, ((ChatHandler) h).ChatCommandDescription)));
+            }
+        }
         public void Start(string serverName, string portNumber)
         {
             using (var server = new SocketServer("ws://0.0.0.0:"+portNumber)) // will stop on disposal.
@@ -54,7 +64,7 @@ namespace WorldEdit
             }
         }
 
-        public void Plugin(IGameEventHander handler)
+        public void Plugin(IGameEventHandler handler)
         {
             GameHandlers.Add(handler);
         }

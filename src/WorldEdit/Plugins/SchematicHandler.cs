@@ -9,6 +9,7 @@ namespace WorldEdit
         public SchematicHandler()
         {
             ChatCommand = "schematic";
+            ChatCommandDescription = "Schematic import utility.";
         }
 
         public override void HandleMessage(IEnumerable<string> args)

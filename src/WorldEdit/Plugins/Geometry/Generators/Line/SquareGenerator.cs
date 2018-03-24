@@ -2,13 +2,8 @@
 
 namespace ShapeGenerator.Generators
 {
-    public class SquareGenerator : IGenerator
+    public class SquareGenerator : Generator, IGenerator
     {
-        public List<Line> TransformToLines(List<Point> points, Options options)
-        {
-            return SphereGenerator.LinesFromPoints(points, options);
-        }
-
         List<Line> IGenerator.Run(Options options)
         {
             if (!options.Fill)
@@ -18,19 +13,19 @@ namespace ShapeGenerator.Generators
             return GenerateFillSquare(options);
         }
 
-        public List<Point> Run(Options options)
+        public List<Point> Run(ISquareOptions options)
         {
             var opt = (ISquareOptions) options;
             var points = new List<Point>();
 
-            var lowerX = opt.CenterX - opt.Width/2;
-            var lowerY = opt.CenterY;
+            var lowerX = opt.X - opt.Width/2;
+            var lowerY = opt.Y;
             ;
-            var lowerZ = opt.CenterZ - opt.Length /2;
-            var upperX = opt.CenterX + opt.Width/2;
+            var lowerZ = opt.Z - opt.Length /2;
+            var upperX = opt.X + opt.Width/2;
             var upperY = lowerY + opt.Height - 1;
             ;
-            var upperZ = opt.CenterZ + opt.Length /2;
+            var upperZ = opt.Z + opt.Length /2;
 
             Swap(ref lowerY, ref upperY);
             Swap(ref lowerX, ref upperX);
@@ -76,17 +71,17 @@ namespace ShapeGenerator.Generators
 
         private static List<Line> GenerateFillSquare(Options opt)
         {
-            var lowerX = opt.CenterX - opt.Width/2;
-            var lowerY = opt.CenterY;
+            var lowerX = opt.X - opt.Width/2;
+            var lowerY = opt.Y;
             ;
-            var lowerZ = opt.CenterZ - opt.Width/2;
+            var lowerZ = opt.Z - opt.Width/2;
 
-            var upperX = opt.CenterX + opt.Width/2;
+            var upperX = opt.X + opt.Width/2;
             var upperY = lowerY + opt.Height - 1;
             ;
-            var upperZ = opt.CenterZ + opt.Width/2;
+            var upperZ = opt.Z + opt.Width/2;
             return
-                SphereGenerator.SplitLinesIntoMaxSizes(new List<Line>
+                Generator.SplitLinesIntoMaxSizes(new List<Line>
                 {
                     new Line
                     {

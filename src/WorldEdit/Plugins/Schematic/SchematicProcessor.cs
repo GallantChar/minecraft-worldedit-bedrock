@@ -202,7 +202,6 @@ namespace WorldEdit.Schematic
             Console.WriteLine($"time to sort {sw.Elapsed}");
 
             sw.Reset();
-
             CommandService.Status("starting schematic import");
 
             sw.Start();

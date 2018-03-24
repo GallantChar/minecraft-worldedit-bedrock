@@ -3,62 +3,43 @@ using System.Collections.Generic;
 
 namespace ShapeGenerator.Generators
 {
-    public class CircleGenerator : IGenerator
+    public class CircleGenerator : Generator, IGenerator
     {
-        public List<Line> TransformToLines(List<Point> points, Options options)
-        {
-            return SphereGenerator.LinesFromPoints(points, options);
-        }
-
         List<Line> IGenerator.Run(Options options)
         {
             return TransformToLines(Run(options), options);
         }
 
-        public List<Point> Run(Options options)
+        public List<Point> Run(ICircleOptions options)
         {
             var points = new List<Point>();
-
-            var radius = options.Radius;
-            var centerX = options.CenterX;
-            var centerZ = options.CenterZ;
-            var fill = options.Fill;
-            var thickness = options.Thickness;
-            //var y = options.Y;
-
-            var lowerX = centerX - radius - 1;
-            var lowerZ = centerZ - radius - 1;
-            var upperX = centerX + radius + 1;
-            var upperZ = centerZ + radius + 1;
-            var lowerY = options.CenterY;
-            var upperY = options.CenterY + options.Height - 1;
-            if (upperY < lowerY)
+            if (options.Radius == 1)
             {
-                var swap = upperY;
-                upperY = lowerY;
-                lowerY = swap;
+                points.Add(new Point {X = options.X, Y = options.Y, Z = options.Z});
+                return points;
             }
-            for (var x = lowerX; x < upperX; x++)
-                for (var z = lowerZ; z < upperZ; z++)
+
+            var d = options.Radius * options.Radius;
+            for (int x = 0; x <= options.Radius + options.Thickness; x++)
+            {
+                for (int z = 0; z <= options.Radius + options.Thickness; z++)
                 {
-                    for (var y = lowerY; y <= upperY; y++)
+                    var distance = x * x + z * z;
+                    for (int y = 0; y < options.Height; y++)
                     {
-                        var distance = Distance(centerX, centerZ, x, z);
-
-                        if (distance == radius || (distance > radius && distance < radius+thickness))
-                            points.Add(new Point {X = x, Z = z, Y = y});
-
-                        if (fill)
-                            if (distance < radius)
-                                points.Add(new Point {X = x, Z = z, Y = y});
+                        if (!options.Fill && Math.Abs(d - distance) < options.Radius + options.Thickness ||
+                            options.Fill && distance < d + options.Thickness)
+                        {
+                            points.Add(new Point {X = options.X + x, Y = options.Y + y, Z = options.Z + z});
+                            points.Add(new Point {X = options.X - x, Y = options.Y + y, Z = options.Z - z});
+                            points.Add(new Point {X = options.X - x, Y = options.Y + y, Z = options.Z + z});
+                            points.Add(new Point {X = options.X + x, Y = options.Y + y, Z = options.Z - z});
+                        }
                     }
                 }
-            return points;
-        }
+            }
 
-        private static double Distance(int centerX, int centerZ, int x, int z)
-        {
-            return Math.Round(Math.Sqrt(Math.Pow(centerX - x, 2) + Math.Pow(centerZ - z, 2)), 0);
+            return points;
         }
     }
 }

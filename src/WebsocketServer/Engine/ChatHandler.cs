@@ -6,10 +6,17 @@ using WorldEdit.Output;
 
 namespace WorldEdit
 {
-    public class ChatHandler : IGameEventHander, ISendCommand
+    public class ChatHandler : IGameEventHandler, ISendCommand
     {
         //private readonly CommandControl _cmdHandler;
-        protected string ChatCommand;
+        public string ChatCommand;
+        public string ChatCommandDescription;
+
+
+        public ChatHandler()
+        {
+            ChatCommandDescription = $"Runs the {ChatCommand} command.";
+        }
 
         public List<GameEvent> CanHandle()
         {
@@ -30,7 +37,7 @@ namespace WorldEdit
         }
 
         public IMinecraftCommandService CommandService { get; set; }
-
+        
         public void Command(string command)
         {
             CommandService.Command(command);

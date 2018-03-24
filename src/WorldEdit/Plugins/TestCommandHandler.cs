@@ -2,17 +2,16 @@
 
 namespace WorldEdit
 {
-    public class ThawHandler : ChatHandler
+    public class TestCommandHandler : ChatHandler
     {
-        public ThawHandler()
+        public TestCommandHandler()
         {
             ChatCommand = "thaw";
-            ChatCommandDescription = "Thaw...";
         }
 
         public override void HandleMessage(IEnumerable<string> args)
         {
-            Command("fill ~-15 ~-15 ~-15 ~15 ~15 ~15 water 0 replace ice");
+            Command(string.Join(" ", args));
         }
     }
 }

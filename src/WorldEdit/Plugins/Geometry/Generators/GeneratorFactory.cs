@@ -19,6 +19,7 @@ namespace ShapeGenerator.Generators
                 case Shape.Box:
                     return new BoxGenerator();
                 case Shape.Cylinder:
+                    return new CircleGenerator();
                 case Shape.Piramid:
                 case Shape.Triangle:
                 case Shape.Rectangle:

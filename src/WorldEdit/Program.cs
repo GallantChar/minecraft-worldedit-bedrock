@@ -17,6 +17,7 @@ namespace WorldEdit
             pluginServer.Plugin(new SavedPositionHandler());
             pluginServer.Plugin(new DrainHandler());
             pluginServer.Plugin(new ThawHandler());
+            pluginServer.Plugin(new TestCommandHandler());
             var createHandler = new CreateHandler();
             pluginServer.Plugin(createHandler);
             pluginServer.Plugin(new SchematicHandler());
@@ -25,7 +26,9 @@ namespace WorldEdit
             //local hotkey handlers.
             pluginServer.Plugin(new RadiusHandler());
             pluginServer.Plugin(new LandSculptHandler());
-            
+            pluginServer.Plugin(new HelpHandler(pluginServer.CommandList));
+
+
 
             Console.CancelKeyPress += delegate(object sender, ConsoleCancelEventArgs e)
             {

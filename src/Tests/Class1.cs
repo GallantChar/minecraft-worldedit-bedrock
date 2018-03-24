@@ -52,9 +52,9 @@ namespace Tests
             var results=gen.Run(new Options()
             {
                 Block = "wool",
-                CenterX = 0,
-                CenterY = 4,
-                CenterZ = 0,
+                X = 0,
+                Y = 4,
+                Z = 0,
                 Fill = false,
                 Height = 1,
                 Merlon = true,

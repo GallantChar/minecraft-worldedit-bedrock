@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Linq;
+using fNbt;
 using ShapeGenerator.Generators;
 
 namespace WorldEdit.Schematic
@@ -13,6 +14,8 @@ namespace WorldEdit.Schematic
         public string BlockName { get; internal set; }
         public int Data { get; internal set; }
         public int SortOrder { get; set; }
+
+        public NbtCompound Tag { get; set; }
 
         public Point Clone()
         {

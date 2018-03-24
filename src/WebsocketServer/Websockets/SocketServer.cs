@@ -17,7 +17,7 @@ namespace MinecraftPluginServer
         private Response _lastResponse;
         protected List<IConnectionEventHander> ConnectionHandlers = new List<IConnectionEventHander>();
 
-        protected List<IGameEventHander> Handlers = new List<IGameEventHander>();
+        protected List<IGameEventHandler> Handlers = new List<IGameEventHandler>();
         protected List<IGameRawEventHander> RawHandlers = new List<IGameRawEventHander>();
 
         public SocketServer()
@@ -30,7 +30,7 @@ namespace MinecraftPluginServer
             MinecraftPluginBase.ErrorReceived = OnError;
         }
 
-        public SocketServer(string url, IGameEventHander[] handlers) : this(url)
+        public SocketServer(string url, IGameEventHandler[] handlers) : this(url)
         {
             Handlers.AddRange(handlers);
         }
@@ -151,7 +151,7 @@ namespace MinecraftPluginServer
             wssv.WebSocketServices.Broadcast(toString);
         }
 
-        public void AddHandler(IGameEventHander handler)
+        public void AddHandler(IGameEventHandler handler)
         {
             Handlers.Add(handler);
         }

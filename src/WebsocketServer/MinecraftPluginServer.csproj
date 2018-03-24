@@ -75,8 +75,8 @@
     <Compile Include="Engine\WebsocketCommandFormater.cs" />
     <Compile Include="Websockets\ChatConsoleLoggingHandler.cs" />
     <Compile Include="Websockets\EnumExtensions.cs" />
-    <Compile Include="IGameEventHander.cs" />
-    <Compile Include="GameEvent.cs" />
+    <Compile Include="Events\IGameEventHandler.cs" />
+    <Compile Include="Events\GameEvent.cs" />
     <Compile Include="Websockets\MessageFileLogger.cs" />
     <Compile Include="Websockets\MessagePurpose.cs" />
     <Compile Include="Websockets\SocketServer.cs" />

@@ -2,9 +2,9 @@
 {
     public interface ISquareOptions
     {
-        int CenterX { get; set; }
-        int CenterZ { get; set; }
-        int CenterY { get; set; }
+        int X { get; set; }
+        int Z { get; set; }
+        int Y { get; set; }
         int Height { get; set; }
         int Width { get; set; }
         bool Fill { get; set; }
