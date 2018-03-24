@@ -26,11 +26,11 @@ namespace ShapeGenerator.Generators
             {
                 end = step * options.Steps + options.StartingAngle;
             }
-            
-            float angle = options.StartingAngle; 
-            for (double i = options.StartingAngle; i < end; i += step) 
+
+            float angle = options.StartingAngle;
+            for (double i = options.StartingAngle; i < end; i += step)
             {
-                shapePoints.Add(DegreesToXZ(angle, options.Radius, new Point{X=options.X, Z=options.Z, Y=options.Y})); 
+                shapePoints.Add(DegreesToXZ(angle, options.Radius, new Point { X = options.X, Z = options.Z, Y = options.Y }));
                 angle += step;
             }
 
@@ -40,23 +40,41 @@ namespace ShapeGenerator.Generators
             }
 
             var points = new List<Point>();
-            for (var i = 0; i < shapePoints.Count-1; i++)
+            for (var i = 0; i < shapePoints.Count - 1; i++)
             {
-                points.AddRange(LineGenerator.DrawLine(shapePoints[i], shapePoints[i+1]));
+                points.AddRange(LineGenerator.DrawLine(shapePoints[i], shapePoints[i + 1]));
             }
 
             if (options.Fill)
             {
-                var filledPoints = new List<Point>();
-                foreach (var edgePoint in points)
-                {
-                    filledPoints.AddRange(LineGenerator.DrawLine(options.Start, edgePoint));
-                }
+                var lz = points.Min(p => p.Z);
+                var hz = points.Max(p => p.Z);
 
-                points = filledPoints;
+                for (var z = lz; z <= hz; z++)
+                {
+                    var lx = points.Where(p => p.Z == z).Min(p => p.X);
+                    var hx = points.Where(p => p.Z == z).Max(p => p.X);
+                    for (var x = lx; x <= hx; x++) 
+                    {
+                        points.Add(new Point { X = x, Z = z, Y = options.Y });
+                    }
+                }
             }
-                
-            return points;
+
+            if (options.Height == 1) return points.Distinct().ToList();
+
+            var ypoints = new List<Point>();
+            for (var y = 0; y < options.Height; y++)
+            {
+                foreach (var p in points.Distinct())
+                {
+                    var yp = p.Clone();
+                    yp.Y = options.Y + y;
+                    ypoints.Add(yp);
+                }
+            }
+
+            return ypoints;
         }
 
         // <summary>
@@ -69,12 +87,12 @@ namespace ShapeGenerator.Generators
 
             return new Point
             {
-                X= (int) Math.Truncate(Math.Cos(radians) * radius + origin.X),
+                X = (int)Math.Truncate(Math.Cos(radians) * radius + origin.X),
                 Y = origin.Y,
-                Z= (int) Math.Truncate(Math.Sin(-radians) * radius + origin.Z)
+                Z = (int)Math.Truncate(Math.Sin(-radians) * radius + origin.Z)
             };
-            
+
         }
-       
+
     }
 }

@@ -16,7 +16,7 @@ namespace WorldEdit
         public CreateHandler()
         {
             ChatCommand = "create";
-            ChatCommandDescription = "Creates a shape. [box|walls|outline|floor|circle|ring|sphere|merlon|triangle]";
+            ChatCommandDescription = "Creates a shape. [box|walls|outline|floor|circle|ring|sphere|merlon|triangle|polygon]";
         }
 
         public override void HandleMessage(IEnumerable<string> args)
@@ -59,6 +59,10 @@ namespace WorldEdit
                 case "triangle":
                     lines = CreateTriangle(commandService, commandArgs, position, savedPositions, lines);
                     break;
+                case "poly":
+                case "polygon":
+                    lines = CreatePoly(commandService, commandArgs, position, savedPositions, lines);
+                    break;
                 default:
                     commandService.Status("CREATE\n" +
                                           "create circle\n" +
@@ -69,7 +73,8 @@ namespace WorldEdit
                                           "create floor\n" +
                                           "create sphere\n" +
                                           "create merlon\n" +
-                                          "create triangle\n"
+                                          "create triangle\n" +
+                                          "create [poly|polygon]"
                     );
                     return;
             }
@@ -531,6 +536,11 @@ namespace WorldEdit
         {
             IPolygonOptions triangle = new Options();
             triangle.Fill = false;
+            if (commandArgs[1].Equals("fill", System.StringComparison.InvariantCultureIgnoreCase))
+            {
+                commandArgs = commandArgs.Skip(1).ToArray();
+                triangle.Fill = true;
+            }
             switch (commandArgs.Length)
             {
                 case 3:
@@ -574,10 +584,10 @@ namespace WorldEdit
                     break;
                 default:
                     commandService.Status("\nCREATE TRIANGLE\n" +
-                                          "create triable radius block\n" +
-                                          "create triangle radius height block - current position\n" +
-                                          "create triangle radius height block [named position]\n" +
-                                          "create triangle radius height block x y z");
+                                          "create triangle [fill] radius block\n" +
+                                          "create triangle [fill] radius height block - current position\n" +
+                                          "create triangle [fill] radius height block [named position]\n" +
+                                          "create triangle [fill] radius height block x y z");
                     return new List<Line>();
             }
 
@@ -587,6 +597,81 @@ namespace WorldEdit
 
             IGenerator generator = new PolygonGenerator();
             lines = generator.Run((Options)triangle);
+            return lines;
+        }
+
+        private static List<Line> CreatePoly(IMinecraftCommandService commandService, string[] commandArgs, Position position, List<SavedPosition> savedPositions,
+            List<Line> lines)
+        {
+            IPolygonOptions poly = new Options();
+            poly.Fill = false;
+
+            if (commandArgs[1].Equals("fill", System.StringComparison.InvariantCultureIgnoreCase))
+            {
+                commandArgs = commandArgs.Skip(1).ToArray();
+                poly.Fill = true;
+            }
+
+            poly.StartingAngle = commandArgs[1].ToInt();
+            poly.Sides = commandArgs[2].ToInt();
+            poly.Steps = commandArgs[3].ToInt();
+            commandArgs = commandArgs.Skip(4).ToArray();
+            
+            switch (commandArgs.Length)
+            {
+                case 2:
+                    //radius block
+                    poly.Block = commandArgs[1];
+                    poly.Radius = commandArgs[0].ToInt();
+                    poly.Height = 1;
+                    poly.X = position.X;
+                    poly.Y = position.Y;
+                    poly.Z = position.Z;
+                    break;
+                // radius height block [position]
+                case 3:
+                    poly.Block = commandArgs[2];
+                    poly.Radius = commandArgs[0].ToInt();
+                    poly.Height = commandArgs[1].ToInt();
+                    poly.X = position.X;
+                    poly.Y = position.Y;
+                    poly.Z = position.Z;
+                    break;
+
+                // radius height block position
+                case 4:
+                    poly.Block = commandArgs[2];
+                    var center = savedPositions.Single(a => a.Name.Equals(commandArgs[4])).Position;
+                    poly.Radius = commandArgs[0].ToInt();
+                    poly.Height = commandArgs[1].ToInt();
+                    poly.X = center.X;
+
+                    poly.Y = center.Y;
+                    poly.Z = center.Z;
+                    break;
+                // radius height block x y z
+                case 6:
+                    poly.Block = commandArgs[2];
+                    poly.Radius = commandArgs[0].ToInt();
+                    poly.Height = commandArgs[1].ToInt();
+                    poly.X = commandArgs[3].ToInt();
+                    poly.Y = commandArgs[4].ToInt();
+                    poly.Z = commandArgs[5].ToInt();
+                    break;
+                default:
+                    commandService.Status("\nCREATE POLY\n" +
+                                          "create poly [fill] startingAngle sides steps radius block\n" +
+                                          "create poly [fill] startingAngle sides steps radius height block - current position\n" +
+                                          "create poly [fill] startingAngle sides steps radius height block [named position]\n" +
+                                          "create poly [fill] startingAngle sides steps radius height block x y z");
+                    return new List<Line>();
+            }
+
+            
+            
+
+            IGenerator generator = new PolygonGenerator();
+            lines = generator.Run((Options)poly);
             return lines;
         }
     }
