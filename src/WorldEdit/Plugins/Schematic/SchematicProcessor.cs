@@ -35,6 +35,9 @@ namespace WorldEdit.Schematic
                 case "outline":
                     CommandOutline(args.Skip(1), position);
                     break;
+                case "cleararea":
+                    CommandClearArea(args.Skip(1), position);
+                    break;
                 case "import":
                     CommandImport(args.Skip(1), position);
                     break;
@@ -121,12 +124,27 @@ namespace WorldEdit.Schematic
             CreateHandler.CreateGeometry(CommandService, "create", "box", results.Width.ToString(), results.Length.ToString(), results.Height.ToString(), "wool", x, target.Y.ToString(), z);
         }
 
+        private void CommandClearArea(IEnumerable<string> args, Position position)
+        {
+            var filename = args.FirstOrDefault();
+            var target = GetAbsolutePosition(position, args.Skip(1).Take(3));
+            //var rotation = GetRotation(args.ElementAtOrDefault(4));
+            //var shift = GetPosition(args.Skip(4).Take(3));
+
+            Console.WriteLine($"outlineing {filename} to {target}");
+            var points = LoadFile(filename);
+            var results = ModelAnalyzer.Analyze(points);
+            var x = (target.X + results.Width / 2).ToString();
+            var z = (target.Z + results.Length / 2).ToString();
+            CreateHandler.CreateGeometry(CommandService, "create", "box", results.Width.ToString(), results.Length.ToString(), results.Height.ToString(), "air", x, target.Y.ToString(), z);
+        }
+
         private void CommandImport(IEnumerable<string> args, Position position)
         {
             var filename = args.FirstOrDefault();
             var target = GetAbsolutePosition(position, args.Skip(1).Take(3));
             var rotation = GetRotation(args.ElementAtOrDefault(4));
-            var shift = GetPosition(args.Skip(4).Take(3));
+            var shift = GetPosition(args.Skip(5).Take(3));
 
             Console.WriteLine($"importing {filename} to {target}");
             var points1 = LoadFile(filename);
