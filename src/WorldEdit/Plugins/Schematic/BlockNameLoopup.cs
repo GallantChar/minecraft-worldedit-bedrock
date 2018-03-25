@@ -1166,7 +1166,7 @@ namespace WorldEdit.Schematic
                 BeData = 0,
                 JeData = 0,
                 FriendlyName = "Oak Door Block",
-                SortOrder = 3
+                SortOrder = 15
             });
             output.Add(new BlockLookup
             {
@@ -1220,7 +1220,7 @@ namespace WorldEdit.Schematic
                 BeData = 0,
                 JeData = 0,
                 FriendlyName = "Iron Door Block",
-                SortOrder = 2
+                SortOrder = 15
             });
             output.Add(new BlockLookup
             {
@@ -1474,7 +1474,8 @@ namespace WorldEdit.Schematic
                 Name = "trapdoor",
                 BeData = 0,
                 JeData = 0,
-                FriendlyName = "Wooden Trapdoor"
+                FriendlyName = "Wooden Trapdoor",
+                SortOrder = 15
             });
             output.Add(new BlockLookup
             {
@@ -2372,7 +2373,8 @@ namespace WorldEdit.Schematic
                 Name = "iron_trapdoor",
                 BeData = 0,
                 JeData = 0,
-                FriendlyName = "Iron Trapdoor"
+                FriendlyName = "Iron Trapdoor",
+                SortOrder = 15
             });
             output.Add(new BlockLookup
             {
@@ -2696,7 +2698,8 @@ namespace WorldEdit.Schematic
                 Name = "spruce_door",
                 BeData = 0,
                 JeData = 0,
-                FriendlyName = "Spruce Door Block"
+                FriendlyName = "Spruce Door Block",
+                SortOrder= 15
             });
             output.Add(new BlockLookup
             {
@@ -2704,7 +2707,8 @@ namespace WorldEdit.Schematic
                 Name = "birch_door",
                 BeData = 0,
                 JeData = 0,
-                FriendlyName = "Birch Door Block"
+                FriendlyName = "Birch Door Block",
+                SortOrder = 15
             });
             output.Add(new BlockLookup
             {
@@ -2712,7 +2716,8 @@ namespace WorldEdit.Schematic
                 Name = "jungle_door",
                 BeData = 0,
                 JeData = 0,
-                FriendlyName = "Jungle Door Block"
+                FriendlyName = "Jungle Door Block",
+                SortOrder = 15
             });
             output.Add(new BlockLookup
             {
@@ -2720,7 +2725,8 @@ namespace WorldEdit.Schematic
                 Name = "acacia_door",
                 BeData = 0,
                 JeData = 0,
-                FriendlyName = "Acacia Door Block"
+                FriendlyName = "Acacia Door Block",
+                SortOrder = 15
             });
             output.Add(new BlockLookup
             {
@@ -2728,7 +2734,8 @@ namespace WorldEdit.Schematic
                 Name = "dark_oak_door",
                 BeData = 0,
                 JeData = 0,
-                FriendlyName = "Dark Oak Door Block"
+                FriendlyName = "Dark Oak Door Block",
+                SortOrder = 15
             });
             output.Add(new BlockLookup {Id = 198, Name = "end_rod", BeData = 0, JeData = 0, FriendlyName = "End Rod"});
             output.Add(new BlockLookup
