@@ -73,13 +73,15 @@ namespace ShapeGenerator.Generators
 
             foreach (var line in lines)
             {
-                if (line.IsSmallerThen(20))
+                if (line.AreaSmallerThan(32768))
                 {
+                    // if (line.IsSmallerThen(20))
+
                     output.Add(line);
                 }
                 else //need to split the line into  smaller segments.
                 {
-                    output.AddRange(line.SplitToAMaxSize(20));
+                    output.AddRange(line.SplitToAMaxSize(31));
                 }
             }
             return output;

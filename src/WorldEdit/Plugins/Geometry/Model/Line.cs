@@ -64,6 +64,9 @@ namespace ShapeGenerator
             throw new InvalidOperationException("lines cannot be combined");
         }
 
+        // Default size allowed to be processed is an area of 32768
+        public bool AreaSmallerThan(int size) => (End.X + 1 - Start.X) * (End.Y + 1 - Start.Y) * (End.Z + 1 - Start.Z) < size;
+
         public bool IsSmallerThen(int size)
         {
             return End.X - Start.X <= size && End.Y - Start.Y <= size && End.Z - Start.Z <= size;

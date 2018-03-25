@@ -7,7 +7,14 @@ namespace MinecraftPluginServer
     {
         public  static MessagePurpose ToMessagePurpose(this string value)
         {
-            return (MessagePurpose)Enum.Parse(typeof(MessagePurpose), value,true);
+                try
+                {
+                    return (MessagePurpose) Enum.Parse(typeof(MessagePurpose), value, true);
+                }
+                catch
+                {
+                    return MessagePurpose.Error;
+                }
         }
         public  static GameEvent ToEvent(this string eventMessage)
         {
