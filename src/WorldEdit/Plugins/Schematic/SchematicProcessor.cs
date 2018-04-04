@@ -250,7 +250,7 @@ namespace WorldEdit.Schematic
         private int GetAbsolutePosition(int absolute, string relative)
         {
             // nothing passed as value
-            if (String.IsNullOrEmpty(relative)) return absolute;
+            if (String.IsNullOrEmpty(relative) || relative.Equals("~")) return absolute;
             // value is fixed location
             if (!relative.StartsWith("~")) return Convert.ToInt32(relative);
             // value is relative position
