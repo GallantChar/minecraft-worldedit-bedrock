@@ -14,7 +14,7 @@ namespace ShapeGenerator.Generators
             var lines = new List<Line>();
             foreach (var point in points.ToList())
             {
-                var item1 = new Line { Start = point.Clone(), End = point.Clone(), Block = GetBlockName(options) };
+                var item1 = new Line { Start = point.Clone(), End = point.Clone(), Block = point.BlockName };
                 lines.Add(item1);
             }
             lines = lines.OrderBy(a => a.Start.X).ThenBy(a => a.Start.Z).ThenBy(a => a.Start.Y).ToList();
@@ -36,35 +36,6 @@ namespace ShapeGenerator.Generators
 
             lines = SplitLinesIntoMaxSizes(lines);
             return lines;
-        }
-
-        private static Random random = new Random();
-
-        private static string GetBlockName(Options options)
-        {
-
-            if (options.Block.Equals("castle", StringComparison.InvariantCultureIgnoreCase))
-            {
-                var blocks = new List<Tuple<string, int>>();
-                blocks.Add(new Tuple<string, int>("stonebrick 0", 78));
-                blocks.Add(new Tuple<string, int>("stone", 5));
-                blocks.Add(new Tuple<string, int>("stonebrick 2", 15));
-                blocks.Add(new Tuple<string, int>("stonebrick 1", 2));
-
-                var total = blocks.Sum(a => a.Item2);
-                var normalized = blocks.Select(a => new { Item = a.Item1, Percentage = a.Item2 / total, Frequency = a.Item2 }).OrderByDescending(a => a.Frequency).ToList();
-
-                var number = random.Next(0, total);
-                foreach (var item in normalized)
-                {
-                    number -= item.Frequency;
-                    if (number <= 0)
-                    {
-                        return item.Item;
-                    }
-                }
-            }
-            return options.Block;
         }
 
         public static List<Line> SplitLinesIntoMaxSizes(List<Line> lines)
@@ -93,13 +64,12 @@ namespace ShapeGenerator.Generators
             {
                 for (var j = i + 1; j < lines.Count; j++)
                 {
-                    if (lines[i].CanCombine(lines[j]))
-                    {
-                        lines[i] = lines[i].Combine(lines[j]);
-                        lines.Remove(lines[j]);
-                        i--;
-                        break;
-                    }
+                    if (!lines[i].CanCombine(lines[j])) continue;
+
+                    lines[i] = lines[i].Combine(lines[j]);
+                    lines.Remove(lines[j]);
+                    i--;
+                    break;
                 }
             }
             return lines;
@@ -107,6 +77,28 @@ namespace ShapeGenerator.Generators
 
         public List<Line> TransformToLines(List<Point> points, Options options)
         {
+            // set patterns
+            points.ForEach(p =>
+            {
+                if (!string.IsNullOrEmpty(p.BlockName)) return;
+                p.BlockName = options.Block;
+            });
+
+            foreach (var transformer in Patterns.Patterns.Transformers)
+                transformer.Value.transform(points);
+
+            // limited to 20 passes. Allowing patterns to utilize patterns in their logic.
+            int passes = 0;
+            do
+            {
+                var processList = points.Where(p => Patterns.Patterns.Blocks.Keys.Contains(p.BlockName))
+                                        .OrderBy(a => a.Y).ThenBy(a => a.X).ThenBy(a => a.Z).ToList();
+                processList.ForEach(p => { p.BlockName = Patterns.Patterns.GetBlock(points, p); });
+                passes++;
+            } while (passes<20 && points.Any(p => Patterns.Patterns.Blocks.Keys.Contains(p.BlockName)));
+
+            points.RemoveAll(p => p.BlockName == "inside" || p.BlockName == "empty"); // this is to prevent processing inside some walled shapes.
+
             return LinesFromPoints(points, options);
         }
     }

@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
@@ -311,11 +312,31 @@ namespace WorldEdit
             return lines;
         }
 
+        private static int GetAbsolutePosition(int absolute, string relative)
+        {
+            // nothing passed as value
+            if (string.IsNullOrEmpty(relative) || relative.Equals("~")) return absolute;
+            // value is fixed location
+            if (!relative.StartsWith("~")) return Convert.ToInt32(relative);
+            // value is relative position
+            return absolute + Convert.ToInt32(relative.Substring(1));
+        }
+
+        private static Position GetAbsolutePosition(Position absolutePosition, IEnumerable<string> relativePosition)
+        {
+            return relativePosition == null ? absolutePosition :
+                new Position(GetAbsolutePosition(absolutePosition.X, relativePosition.ElementAtOrDefault(0)),
+                    GetAbsolutePosition(absolutePosition.Y, relativePosition.ElementAtOrDefault(1)),
+                    GetAbsolutePosition(absolutePosition.Z, relativePosition.ElementAtOrDefault(2)));
+        }
+
         private static List<Line> CreateWalls(IMinecraftCommandService commandService, string[] commandArgs, Position position, List<SavedPosition> savedPositions,
             List<Line> lines)
         {
             ISquareOptions walls = new Options();
             walls.Fill = false;
+
+            var location = position;
             switch (commandArgs.Length)
             {
                 // width height block [postition]
@@ -324,9 +345,6 @@ namespace WorldEdit
                     walls.Length = commandArgs[2].ToInt();
                     walls.Height = commandArgs[3].ToInt();
                     walls.Block = commandArgs[4];
-                    walls.X = position.X;
-                    walls.Y = position.Y;
-                    walls.Z = position.Z;
                     break;
                 case 6:
 
@@ -334,19 +352,14 @@ namespace WorldEdit
                     walls.Length = commandArgs[2].ToInt();
                     walls.Height = commandArgs[3].ToInt();
                     walls.Block = commandArgs[4];
-                    var center = savedPositions.Single(a => a.Name.Equals(commandArgs[5])).Position;
-                    walls.X = center.X;
-                    walls.Y = center.Y;
-                    walls.Z = center.Z;
+                    location = savedPositions.Single(a => a.Name.Equals(commandArgs[5])).Position;
                     break;
                 case 8:
                     walls.Width = commandArgs[1].ToInt();
                     walls.Length = commandArgs[2].ToInt();
                     walls.Height = commandArgs[3].ToInt();
                     walls.Block = commandArgs[4];
-                    walls.X = commandArgs[5].ToInt();
-                    walls.Y = commandArgs[6].ToInt();
-                    walls.Z = commandArgs[7].ToInt();
+                    location = GetAbsolutePosition(position, commandArgs.Skip(5).Take(3));
                     walls.Thickness = 1;
                     break;
                 case 9:
@@ -354,9 +367,7 @@ namespace WorldEdit
                     walls.Length = commandArgs[2].ToInt();
                     walls.Height = commandArgs[3].ToInt();
                     walls.Block = commandArgs[4];
-                    walls.X = commandArgs[5].ToInt();
-                    walls.Y = commandArgs[6].ToInt();
-                    walls.Z = commandArgs[7].ToInt();
+                    location = GetAbsolutePosition(position, commandArgs.Skip(5).Take(3));
                     walls.Thickness = commandArgs[8].ToInt();
                     break;
                 default:
@@ -367,6 +378,10 @@ namespace WorldEdit
                     commandService.Status(help);
                     return new List<Line>();
             }
+
+            walls.X = location.X;
+            walls.Y = location.Y;
+            walls.Z = location.Z;
             IGenerator generator = new SquareGenerator();
             lines = generator.Run((Options)walls);
             return lines;

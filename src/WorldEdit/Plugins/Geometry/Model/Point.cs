@@ -9,6 +9,8 @@ namespace ShapeGenerator
         public int Y { get; set; }
         public int Z { get; set; }
 
+        public string BlockName { get; set; }
+
         public Point Clone()
         {
             return new Point { X = X, Y = Y, Z = Z };

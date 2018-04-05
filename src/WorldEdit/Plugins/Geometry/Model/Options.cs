@@ -2,7 +2,7 @@
 
 namespace ShapeGenerator
 {
-    public class Options : ISphereOptions, ICircleOptions, ILineOptions, ISquareOptions, IPolygonOptions
+    public class Options : ISphereOptions, ICircleOptions, ILineOptions, ISquareOptions, IPolygonOptions, IMazeOptions
     {
         public Shape Shape { get; set; }
         public int Height { get; set; }

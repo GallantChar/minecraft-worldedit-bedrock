@@ -61,7 +61,7 @@ namespace WorldEdit.Schematic
         private void CommandTest(IEnumerable<string> args, Position position)
         {
             var target = GetAbsolutePosition(position, args.Take(3));
-            var shift = GetPosition(args.Skip(3).Take(3));
+            var shift = GetShiftPosition(args.Skip(3).Take(3));
 
             // analyze then import all schematics in the folder.
             var filesToProcess = GetSchematics().Select(a => new {Points = LoadFile(a), Filename = a})
@@ -144,7 +144,7 @@ namespace WorldEdit.Schematic
             var filename = args.FirstOrDefault();
             var target = GetAbsolutePosition(position, args.Skip(1).Take(3));
             var rotation = GetRotation(args.ElementAtOrDefault(4));
-            var shift = GetPosition(args.Skip(5).Take(3));
+            var shift = GetShiftPosition(args.Skip(5).Take(3));
 
             Console.WriteLine($"importing {filename} to {target}");
             var points1 = LoadFile(filename);
@@ -265,7 +265,7 @@ namespace WorldEdit.Schematic
                     GetAbsolutePosition(absolutePosition.Z, relativePosition.ElementAtOrDefault(2)));
         }
 
-        private Position GetPosition(IEnumerable<string> coordinates)
+        private Position GetShiftPosition(IEnumerable<string> coordinates)
         {
             return new Position
             (Convert.ToInt32(coordinates.ElementAtOrDefault(0)),

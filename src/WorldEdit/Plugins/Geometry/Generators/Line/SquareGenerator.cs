@@ -39,7 +39,11 @@ namespace ShapeGenerator.Generators
                     {
                         if (TestForCoordinate(x, lowerX, upperX, z, lowerZ, upperZ, opt, y, lowerY, upperY))
                         {
-                            points.Add(new Point {X = x, Y = y, Z = z});
+                            points.Add(new Point {X = x, Y = y, Z = z, BlockName = options.Block});
+                        }
+                        else
+                        {
+                            points.Add(new Point {X = x, Y = y, Z = z, BlockName = "inside"});
                         }
                     }
                 }
