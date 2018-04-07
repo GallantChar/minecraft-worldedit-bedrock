@@ -11,7 +11,7 @@ namespace WorldEdit
 {
     public class SavedPositionHandler : ChatHandler
     {
-        private readonly SavedPositionService SavedPositions = new SavedPositionService();
+        public readonly SavedPositionService SavedPositions = new SavedPositionService();
 
         public SavedPositionHandler()
         {

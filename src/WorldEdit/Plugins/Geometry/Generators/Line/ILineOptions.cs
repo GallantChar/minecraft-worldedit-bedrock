@@ -10,7 +10,7 @@ namespace ShapeGenerator
         int Y2 { get; set; }
         int Z2 { get; set; }
 
-        Point Start { get; }
-        Point End { get; }
+        Point Start { get; set; }
+        Point End { get; set;  }
     }
 }

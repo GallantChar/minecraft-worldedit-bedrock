@@ -12,15 +12,16 @@ namespace WorldEdit
         {
             var pluginServer = new PluginServer();
 
+            var savedPositionHandler = new SavedPositionHandler();
 
             //game event handlers
-            pluginServer.Plugin(new SavedPositionHandler());
+            pluginServer.Plugin(savedPositionHandler);
             pluginServer.Plugin(new DrainHandler());
             pluginServer.Plugin(new ThawHandler());
             pluginServer.Plugin(new TestCommandHandler());
-            var createHandler = new CreateHandler();
+            var createHandler = new CreateHandler(savedPositionHandler);
             pluginServer.Plugin(createHandler);
-            pluginServer.Plugin(new SchematicHandler());
+            pluginServer.Plugin(new SchematicHandler(savedPositionHandler));
             pluginServer.Plugin(new ChatLogHandler());
             pluginServer.Plugin(new RunCreatesHandler(createHandler));
             //local hotkey handlers.

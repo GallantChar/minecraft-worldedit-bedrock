@@ -5,24 +5,24 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
-using Newtonsoft.Json;
 using ShapeGenerator;
-using ShapeGenerator.Generators;
 using WorldEdit.Input;
 using WorldEdit.Output;
+// ReSharper disable PossibleMultipleEnumeration
 
 namespace WorldEdit.Schematic
 {
     public class SchematicProcessor
     {
-        private readonly IMinecraftCommandService CommandService;
+        private readonly IMinecraftCommandService _commandService;
 
         public SchematicProcessor(IMinecraftCommandService commandService)
         {
-            CommandService = commandService;
+            _commandService = commandService;
         }
 
-        public void SchematicCommandProcessor(Position position, IEnumerable<string> args)
+        public void SchematicCommandProcessor(Position position, List<SavedPosition> savedPositions,
+            IEnumerable<string> args)
         {
             switch (args.FirstOrDefault() /* command */)
             {
@@ -33,13 +33,13 @@ namespace WorldEdit.Schematic
                     CommandAnalyzeModel(args.Skip(1));
                     break;
                 case "outline":
-                    CommandOutline(args.Skip(1), position);
+                    CommandOutline(args.Skip(1), position, savedPositions);
                     break;
                 case "cleararea":
-                    CommandClearArea(args.Skip(1), position);
+                    CommandClearArea(args.Skip(1), position, savedPositions);
                     break;
                 case "import":
-                    CommandImport(args.Skip(1), position);
+                    CommandImport(args.Skip(1), position, savedPositions);
                     break;
                 case "test":
                     CommandTest(args.Skip(1), position);
@@ -52,15 +52,15 @@ namespace WorldEdit.Schematic
 
         private void CommandHelp()
         {
-            CommandService.Status("schematic command\n" +
-                                            "schematic list\n" +
-                                            "schematic analyze [name]\n" +
-                                            "schematic import name x y z (rotation) (Shift X) (Shift Y) (Shift Z)");
+            _commandService.Status("schematic command\n" +
+                                  "schematic list\n" +
+                                  "schematic analyze [name]\n" +
+                                  "schematic import name x y z (rotation) (Shift X) (Shift Y) (Shift Z)");
         }
 
         private void CommandTest(IEnumerable<string> args, Position position)
         {
-            var target = GetAbsolutePosition(position, args.Take(3));
+            var target = position.GetAbsolutePosition(args.Take(3));
             var shift = GetShiftPosition(args.Skip(3).Take(3));
 
             // analyze then import all schematics in the folder.
@@ -71,16 +71,19 @@ namespace WorldEdit.Schematic
                 .ToList();
             foreach (var f in filesToProcess)
             {
-                CommandService.Command(
+                _commandService.Command(
                     $"tp @s {target.X + f.Analysis.Width / 2} {target.Y + f.Analysis.Height} {target.Z - 5}");
-                CommandService.Status($"importing {Path.GetFileName(f.Filename)}");
+                _commandService.Status($"importing {Path.GetFileName(f.Filename)}");
                 SendCommandsToCodeConnection(target, f.Points, Rotate.None, shift);
 
                 target.X += f.Analysis.Width + 15;
             }
         }
 
-        private static string[] GetSchematics() => Directory.GetFiles(GetSchematicFolder(), "*.schematic");
+        private static string[] GetSchematics()
+        {
+            return Directory.GetFiles(GetSchematicFolder(), "*.schematic");
+        }
 
         private static string GetSchematicFolder()
         {
@@ -96,23 +99,23 @@ namespace WorldEdit.Schematic
             var firstGroundLayer =
                 results.Layers.First(a => a.Blocks.Any(b => b.Block.Equals("air") && b.PercentOfLayer >= 0.5))
                     .Y;
-            string output =
+            var output =
                 $"{Path.GetFileName(args.FirstOrDefault())} Model Size: X:{results.Width} Y:{results.Height} Z:{results.Length} Ground Level:{firstGroundLayer} Total Blocks:{results.Width * results.Height * results.Length}";
 
-            CommandService.Status(output);
+            _commandService.Status(output);
         }
 
         private void CommandListFiles()
         {
-            CommandService
+            _commandService
                 .Status("Schematics: \n" +
-                        String.Join("\n", GetSchematics().Select(Path.GetFileNameWithoutExtension).OrderBy(a => a)));
+                        string.Join("\n", GetSchematics().Select(Path.GetFileNameWithoutExtension).OrderBy(a => a)));
         }
 
-        private void CommandOutline(IEnumerable<string> args, Position position)
+        private void CommandOutline(IEnumerable<string> args, Position position, List<SavedPosition> savedPositions)
         {
             var filename = args.FirstOrDefault();
-            var target = GetAbsolutePosition(position, args.Skip(1).Take(3));
+            var target = position.GetAbsolutePosition(args.Skip(1).Take(3), savedPositions);
             //var rotation = GetRotation(args.ElementAtOrDefault(4));
             //var shift = GetPosition(args.Skip(4).Take(3));
 
@@ -121,13 +124,14 @@ namespace WorldEdit.Schematic
             var results = ModelAnalyzer.Analyze(points);
             var x = (target.X + results.Width / 2).ToString();
             var z = (target.Z + results.Length / 2).ToString();
-            CreateHandler.CreateGeometry(CommandService, "create", "box", results.Width.ToString(), results.Length.ToString(), results.Height.ToString(), "wool", x, target.Y.ToString(), z);
+            CreateHandler.CreateGeometry(_commandService, savedPositions, "create", "box", results.Width.ToString(),
+                results.Length.ToString(), results.Height.ToString(), "wool", x, target.Y.ToString(), z);
         }
 
-        private void CommandClearArea(IEnumerable<string> args, Position position)
+        private void CommandClearArea(IEnumerable<string> args, Position position, List<SavedPosition> savedPositions)
         {
             var filename = args.FirstOrDefault();
-            var target = GetAbsolutePosition(position, args.Skip(1).Take(3));
+            var target = position.GetAbsolutePosition(args.Skip(1).Take(3), savedPositions);
             //var rotation = GetRotation(args.ElementAtOrDefault(4));
             //var shift = GetPosition(args.Skip(4).Take(3));
 
@@ -136,13 +140,14 @@ namespace WorldEdit.Schematic
             var results = ModelAnalyzer.Analyze(points);
             var x = (target.X + results.Width / 2).ToString();
             var z = (target.Z + results.Length / 2).ToString();
-            CreateHandler.CreateGeometry(CommandService, "create", "box", results.Width.ToString(), results.Length.ToString(), results.Height.ToString(), "air", x, target.Y.ToString(), z);
+            CreateHandler.CreateGeometry(_commandService, savedPositions, "create", "box", results.Width.ToString(),
+                results.Length.ToString(), results.Height.ToString(), "air", x, target.Y.ToString(), z);
         }
 
-        private void CommandImport(IEnumerable<string> args, Position position)
+        private void CommandImport(IEnumerable<string> args, Position position, List<SavedPosition> savedPositions)
         {
             var filename = args.FirstOrDefault();
-            var target = GetAbsolutePosition(position, args.Skip(1).Take(3));
+            var target = position.GetAbsolutePosition(args.Skip(1).Take(3), savedPositions);
             var rotation = GetRotation(args.ElementAtOrDefault(4));
             var shift = GetShiftPosition(args.Skip(5).Take(3));
 
@@ -163,10 +168,10 @@ namespace WorldEdit.Schematic
             var files = Directory.GetFiles(schematicFolder, filename);
             if (files.Length == 0)
             {
-                CommandService.Status("Unable to locate the schematic.");
+                _commandService.Status("Unable to locate the schematic.");
                 return null;
             }
-                
+
             var schematic = Schematic.LoadFromFile(Path.GetFullPath(files[0]));
             return schematic.GetPoints();
         }
@@ -177,29 +182,28 @@ namespace WorldEdit.Schematic
             // var service = new MinecraftCodeConnectionCommandService();
             var sw = new Stopwatch();
 
-            CommandService.Status("preparing schematic");
+            _commandService.Status("preparing schematic");
 
             if (clip != null)
-            {
                 points =
                     points.Where(a => a.X >= clip.X && a.Y >= clip.Y && a.Z >= clip.Z)
                         .Select(a => a.Shift(clip.Muliply(-1)))
                         .ToList();
-            }
             if (rotation != Rotate.None)
             {
                 sw.Start();
-                Console.WriteLine($"rotating points...");
+                Console.WriteLine("rotating points...");
                 var rotatedPoints = points.AsParallel().Select(a => a.Rotate(rotation)).ToList();
                 Console.WriteLine($"time to rotate {sw.Elapsed}");
                 sw.Reset();
                 var measures = ModelAnalyzer.Analyze(rotatedPoints);
                 sw.Start();
-                Console.WriteLine($"shifting points...");
+                Console.WriteLine("shifting points...");
                 points = rotatedPoints.AsParallel().Select(a => a.Shift(measures.Minimum.Muliply(-1))).ToList();
                 Console.WriteLine($"time to shift {sw.Elapsed}");
                 sw.Reset();
             }
+
             sw.Start();
             Console.WriteLine($"combining points...");
             var exportLines = ConvertFileToCommands(points.Where(a => a.BlockId != 0).ToList());
@@ -220,49 +224,32 @@ namespace WorldEdit.Schematic
             Console.WriteLine($"time to sort {sw.Elapsed}");
 
             sw.Reset();
-            CommandService.Status("starting schematic import");
+            _commandService.Status("starting schematic import");
 
             sw.Start();
             foreach (var line in importLines)
             {
-                var command = CommandService.GetFormater()
+                var command = _commandService.GetFormater()
                     .Fill(line.Start.X, line.Start.Y, line.Start.Z, line.End.X, line.End.Y, line.End.Z, line.BlockName,
                         line.Data.ToString());
-                CommandService.Command(command);
+                _commandService.Command(command);
                 //$"fill?from={line.Start.X} {line.Start.Y} {line.Start.Z}&to={line.End.X} {line.End.Y} {line.End.Z}&tileName={line.BlockName}&tileData={line.Data}");
             }
+
             sw.Stop();
-            CommandService.Status($"time to queue commands {sw.Elapsed.TotalSeconds}");
+            _commandService.Status($"time to queue commands {sw.Elapsed.TotalSeconds}");
             Console.WriteLine($"time to queue commands {sw.Elapsed.TotalSeconds}");
             sw.Reset();
             sw.Start();
-            CommandService.Wait();
+            _commandService.Wait();
             sw.Stop();
-            CommandService.Status($"time to complete import {sw.Elapsed.TotalSeconds}");
+            _commandService.Status($"time to complete import {sw.Elapsed.TotalSeconds}");
             Console.WriteLine($"time to complete import {sw.Elapsed.TotalSeconds}");
         }
 
         private static List<Line> ConvertFileToCommands(List<Point> points)
         {
             return LineFactory.CreateFromPoints(points);
-        }
-
-        private int GetAbsolutePosition(int absolute, string relative)
-        {
-            // nothing passed as value
-            if (String.IsNullOrEmpty(relative) || relative.Equals("~")) return absolute;
-            // value is fixed location
-            if (!relative.StartsWith("~")) return Convert.ToInt32(relative);
-            // value is relative position
-            return absolute + Convert.ToInt32(relative.Substring(1));
-        }
-
-        private Position GetAbsolutePosition(Position absolutePosition, IEnumerable<string> relativePosition)
-        {
-            return relativePosition == null ? absolutePosition :
-                new Position(GetAbsolutePosition(absolutePosition.X, relativePosition.ElementAtOrDefault(0)),
-                    GetAbsolutePosition(absolutePosition.Y, relativePosition.ElementAtOrDefault(1)),
-                    GetAbsolutePosition(absolutePosition.Z, relativePosition.ElementAtOrDefault(2)));
         }
 
         private Position GetShiftPosition(IEnumerable<string> coordinates)

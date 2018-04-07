@@ -14,55 +14,65 @@ namespace WorldEdit
 {
     public class CreateHandler : ChatHandler
     {
-        public CreateHandler()
+        private List<SavedPosition> SavedPositions => _savedPositionHandler.SavedPositions.Positions;
+        private readonly SavedPositionHandler _savedPositionHandler;
+        public CreateHandler(SavedPositionHandler posHandler)
         {
             ChatCommand = "create";
-            ChatCommandDescription = "Creates a shape. [box|walls|outline|floor|circle|ring|sphere|merlon|triangle|polygon]";
+            ChatCommandDescription =
+                "Creates a shape.\ncreate [box|walls|outline|floor|circle|ring|sphere|merlon|triangle|polygon(poly)]";
+            _savedPositionHandler = posHandler;
         }
 
         public override void HandleMessage(IEnumerable<string> args)
         {
-            CreateGeometry(CommandService, args.ToArray());
+            CreateGeometry(CommandService, SavedPositions, args.ToArray());
         }
 
-        public static void CreateGeometry(IMinecraftCommandService commandService, params string[] args)
+        public static void CreateGeometry(IMinecraftCommandService commandService, List<SavedPosition> savedPositions, params string[] args)
         {
+            var sw = new Stopwatch();
+            sw.Start();
             var position = commandService.GetLocation();
-            var savedPositions = new List<SavedPosition>();
+            
             var commandArgs = args.Skip(1).ToArray();
             var lines = new List<Line>();
-            switch ((commandArgs.ElementAtOrDefault(0)??"").ToLower())
+            var createCommand = (commandArgs.ElementAtOrDefault(0) ?? "").ToLower();
+            switch (createCommand)
             {
                 case "circle":
-                    lines = CreateCircle(commandService, commandArgs, position, savedPositions, lines);
+                    lines = CreateCircle(commandService, commandArgs, position, savedPositions);
                     break;
                 case "ring":
-                    lines = CreateRing(commandService, commandArgs, position, savedPositions, lines);
+                    lines = CreateRing(commandService, commandArgs, position, savedPositions);
                     break;
                 case "walls":
-                    lines = CreateWalls(commandService, commandArgs, position, savedPositions, lines);
+                    lines = CreateWalls(commandService, commandArgs, position, savedPositions);
                     break;
                 case "outline":
-                    lines = CreateOutline(commandService, commandArgs, position, savedPositions, lines);
+                    lines = CreateBox(commandService, commandArgs, position, savedPositions, false);
                     break;
                 case "box":
-                    lines = CreateBox(commandService, commandArgs, position, savedPositions, lines);
+                    lines = CreateBox(commandService, commandArgs, position, savedPositions, true);
                     break;
                 case "floor":
-                    lines = CreateFloor(commandService, commandArgs, position, savedPositions, lines);
+                    lines = CreateFloor(commandService, commandArgs, position, savedPositions);
                     break;
                 case "sphere":
-                    lines = CreateSphere(commandService, commandArgs, position, savedPositions, lines);
+                    lines = CreateSphere(commandService, commandArgs, position, savedPositions);
                     break;
                 case "merlon":
-                    lines = CreateMerlon(commandService, commandArgs, position, savedPositions, lines);
+                    lines = CreateMerlon(commandService, commandArgs, position, savedPositions);
+                    break;
+                case "maze":
+                    lines = CreateMaze(commandService, commandArgs, position, savedPositions);
                     break;
                 case "triangle":
-                    lines = CreateTriangle(commandService, commandArgs, position, savedPositions, lines);
+                    lines = CreateTriangle(commandService, commandArgs, position, savedPositions);
                     break;
                 case "poly":
                 case "polygon":
-                    lines = CreatePoly(commandService, commandArgs, position, savedPositions, lines);
+                    lines = CreatePoly(commandService, commandArgs, position, savedPositions);
                     break;
                 default:
                     commandService.Status("CREATE\n" +
@@ -75,619 +85,452 @@ namespace WorldEdit
                                           "create sphere\n" +
                                           "create merlon\n" +
                                           "create triangle\n" +
-                                          "create [poly|polygon]"
+                                          "create [poly|polygon]\n" +
+                                          "create maze"
                     );
                     return;
             }
 
             if (!lines.Any()) return;
+            LogTime(commandService, sw, $"CREATE {createCommand.ToUpper()}: time to get lines to render: {sw.Elapsed.TotalSeconds}");
 
             var commandFormater = commandService.GetFormater();
-            var sw = new Stopwatch();
-            sw.Start();
+            
             var lastLine = lines.First();
             foreach (var line in lines)
             {
                 if (lastLine.Start.Distance2D(line.Start) > 100)
-                {                        
+                {
                     commandService.Command($"tp @s {line.Start.X} ~ {line.Start.Z}");
                 }
-                var command = commandFormater.Fill(line.Start.X, line.Start.Y, line.Start.Z, line.End.X,line.End.Y,line.End.Z, line.Block, line.Block.Contains(" ")?"":"0");
+
+                var command = commandFormater.Fill(line.Start.X, line.Start.Y, line.Start.Z, line.End.X, line.End.Y,
+                    line.End.Z, line.Block, line.Block.Contains(" ") ? "" : "0");
+                // TODO: Identify the limitation here and account for it.  
+                // Should this be executed on a thread so that other commands can be processed at the same time?  
+                // Is that possible?
                 commandService.Command(command);
                 lastLine = line;
             }
-            sw.Stop();
-            commandService.Status($"time to queue commands {sw.Elapsed.TotalSeconds}");
-            //Console.WriteLine($"time to queue commands {sw.Elapsed.TotalSeconds}");
-            sw.Reset();
-            sw.Start();
+
+            LogTime(commandService, sw, $"CREATE {createCommand.ToUpper()}: time to queue commands: {sw.Elapsed.TotalSeconds}");
+
             commandService.Wait();
-            sw.Stop();
-            commandService.Status($"time to complete import {sw.Elapsed.TotalSeconds}");
-            //Console.WriteLine($"time to complete import {sw.Elapsed.TotalSeconds}");
+            LogTime(commandService, sw, $"CREATE {createCommand.ToUpper()}: time to complete import: {sw.Elapsed.TotalSeconds}");
         }
 
-        private static List<Line> CreateMerlon(IMinecraftCommandService commandService, string[] commandArgs, Position position, List<SavedPosition> savedPositions, List<Line> lines)
+        private static void LogTime(IMinecraftCommandService commandService, Stopwatch sw, string message)
         {
-            ISquareOptions walls = new Options();
-            walls.Fill = false;
-            walls.Merlon = true;
+            sw.Stop();
+            commandService.Status(message);
+            sw.Reset();
+            sw.Start();
+        }
+
+        private static List<Line> CreateMerlon(IMinecraftCommandService commandService, string[] commandArgs,
+            Position position, List<SavedPosition> savedPositions)
+        {
+            ISquareOptions merlon = new Options { Fill = false, Merlon = true };
+            commandArgs = ProcessFillArgument(commandArgs, (Options)merlon);
+            var location = position;
             switch (commandArgs.Length)
             {
-                // width height block [postition]
-                case 4:
-                    walls.Width = commandArgs[1].ToInt();
-                    walls.Length = commandArgs[2].ToInt();
-                    walls.Height = 1;
-                    walls.Block = commandArgs[3];
-                    walls.X = position.X;
-                    walls.Y = position.Y;
-                    walls.Z = position.Z;
+                case 4: // width(X) length(Z) block @ current position
+                    merlon.Width = commandArgs[1].ToInt();
+                    merlon.Length = commandArgs[2].ToInt();
+                    merlon.Height = 1;
+                    merlon.Block = commandArgs[3];
                     break;
-                case 5:
-
-                    walls.Width = commandArgs[1].ToInt();
-                    walls.Length = commandArgs[2].ToInt();
-                    walls.Height = 1;
-                    walls.Block = commandArgs[3];
-                    var center = savedPositions.Single(a => a.Name.Equals(commandArgs[4])).Position;
-                    walls.X = center.X;
-                    walls.Y = center.Y;
-                    walls.Z = center.Z;
-                    break;
-                case 7:
-
-                    walls.Width = commandArgs[1].ToInt();
-                    walls.Length = commandArgs[2].ToInt();
-                    walls.Height = 1;
-                    walls.Block = commandArgs[3];
-                    walls.X = commandArgs[4].ToInt();
-                    walls.Y = commandArgs[5].ToInt();
-                    walls.Z = commandArgs[6].ToInt();
+                case 5: // width(X) length(Z) block savedposition
+                case 7: // width(X) length(Z) block x y z
+                    merlon.Width = commandArgs[1].ToInt();
+                    merlon.Length = commandArgs[2].ToInt();
+                    merlon.Height = 1;
+                    merlon.Block = commandArgs[3];
+                    location = location.GetAbsolutePosition(commandArgs.Skip(4).Take(3), savedPositions);
                     break;
                 default:
                     var help = "\nCREATE MERLON\n" +
-                               "create merlon length width block - center at current position\n" +
-                               "create merlon length width block [named position]\n" +
-                               "create merlon length width block x y z";
+                               "create merlon [fill] width(X) length(Z) block - center at current position\n" +
+                               "create merlon [fill] width(X) length(Z) block [named position]\n" +
+                               "create merlon [fill] width(X) length(Z) block [x y z]";
                     commandService.Status(help);
                     return new List<Line>();
             }
-            IGenerator generator = new MerlonGenerator();
-            lines = generator.Run((Options)walls);
-            return lines;
 
+            merlon.Start = location.ToPoint();
+            IGenerator generator = new MerlonGenerator();
+            return generator.Run((Options)merlon);
         }
 
-        private static List<Line> CreateFloor(IMinecraftCommandService commandService, string[] commandArgs, Position position, List<SavedPosition> savedPositions,
-            List<Line> lines)
+        private static List<Line> CreateMaze(IMinecraftCommandService commandService, string[] commandArgs,
+            Position position, List<SavedPosition> savedPositions)
         {
-            ISquareOptions walls = new Options();
-            walls.Fill = true;
+            IMazeOptions maze = new Options { Fill = false, Thickness = 1, InnerThickness = 3 };
+            var location = position;
             switch (commandArgs.Length)
             {
-                // width height block [postition]
-                case 4:
-                    walls.Width = commandArgs[1].ToInt();
-                    walls.Length = commandArgs[2].ToInt();
-                    walls.Height = 1;
-                    walls.Block = commandArgs[3];
-                    walls.X = position.X;
-                    walls.Y = position.Y;
-                    walls.Z = position.Z;
-                    break;
-                case 5:
-
-                    walls.Width = commandArgs[1].ToInt();
-                    walls.Length = commandArgs[2].ToInt();
-                    walls.Height = 1;
-                    walls.Block = commandArgs[3];
-                    var center = savedPositions.Single(a => a.Name.Equals(commandArgs[4])).Position;
-                    walls.X = center.X;
-                    walls.Y = center.Y;
-                    walls.Z = center.Z;
-                    break;
+                // width(X) length(Z) height(Y) block [postition]
                 case 7:
+                    maze.Width = commandArgs[1].ToInt();
+                    maze.Length = commandArgs[2].ToInt();
+                    maze.Height = commandArgs[3].ToInt();
+                    maze.Thickness = commandArgs[4].ToInt();
+                    maze.InnerThickness = commandArgs[5].ToInt();
+                    maze.Block = commandArgs[6];
+                    break;
+                case 8: // width(X) length(Z) height(Y) block savedposition
+                case 10: // width(X) length(Z) height(Y) block x y z
+                    maze.Width = commandArgs[1].ToInt();
+                    maze.Length = commandArgs[2].ToInt();
+                    maze.Height = commandArgs[3].ToInt();
+                    maze.Thickness = commandArgs[4].ToInt();
+                    maze.InnerThickness = commandArgs[5].ToInt();
+                    maze.Block = commandArgs[6];
+                    location = location.GetAbsolutePosition(commandArgs.Skip(7).Take(3), savedPositions);
+                    break;
+                default:
+                    var help = "\nCREATE MAZE\n" +
+                               "create maze width(X) length(Z) height(Y) wall-thickness inner-thickness block - center at current position\n" +
+                               "create maze width(X) length(Z) height(Y) wall-thickness inner-thickness block [name]\n" +
+                               "create maze width(X) length(Z) height(Y) wall-thickness inner-thickness block [x y z]\n";
+                    commandService.Status(help);
+                    return new List<Line>();
+            }
 
-                    walls.Width = commandArgs[1].ToInt();
-                    walls.Length = commandArgs[2].ToInt();
-                    walls.Height = 1;
-                    walls.Block = commandArgs[3];
-                    walls.X = commandArgs[4].ToInt();
-                    walls.Y = commandArgs[5].ToInt();
-                    walls.Z = commandArgs[6].ToInt();
+            maze.Start = location.ToPoint();
+            IGenerator generator = new MazeGenerator(commandService);
+            return generator.Run((Options)maze);
+        }
+
+        private static List<Line> CreateFloor(IMinecraftCommandService commandService, string[] commandArgs,
+            Position position, List<SavedPosition> savedPositions)
+        {
+            ISquareOptions floor = new Options {Fill = true};
+            commandArgs = ProcessFillArgument(commandArgs, (Options)floor);
+            var location = position;
+            switch (commandArgs.Length)
+            {
+                case 4: // width(X) length(Z) block @ current position
+                    floor.Width = commandArgs[1].ToInt();
+                    floor.Length = commandArgs[2].ToInt();
+                    floor.Height = 1;
+                    floor.Block = commandArgs[3];
+                    break;
+                case 5: // width(X) length(Z) block savedposition
+                case 7: // width(X) length(Z) block x y z
+                    floor.Width = commandArgs[1].ToInt();
+                    floor.Length = commandArgs[2].ToInt();
+                    floor.Height = 1;
+                    floor.Block = commandArgs[3];
+                    location = location.GetAbsolutePosition(commandArgs.Skip(4).Take(3), savedPositions);
                     break;
                 default:
                     var help = "\nCREATE FLOOR\n" +
-                               "create floor length width block - center at current position\n" +
-                               "create floor length width block [named position]\n" +
-                               "create floor length width block x y z";
+                               "create floor [nofill] width(X) length(Z) block - center at current position\n" +
+                               "create floor [nofill] width(X) length(Z) block [named position]\n" +
+                               "create floor [nofill] width(X) length(Z) block [x y z]";
                     commandService.Status(help);
                     return new List<Line>();
             }
+
+            floor.Start = location.ToPoint();
             IGenerator generator = new BoxGenerator();
-            lines = generator.Run((Options)walls);
-            return lines;
+            return generator.Run((Options) floor);
         }
 
-        private static List<Line> CreateBox(IMinecraftCommandService commandService, string[] commandArgs, Position position, List<SavedPosition> savedPositions,
-            List<Line> lines)
+        private static List<Line> CreateBox(IMinecraftCommandService commandService, string[] commandArgs,
+            Position position, List<SavedPosition> savedPositions, bool fill)
         {
-            ISquareOptions walls = new Options();
-            walls.Fill = true;
-            switch (commandArgs.Length)
-            {
-                // width height block [postition]
-                case 5:
-                    walls.Width = commandArgs[1].ToInt();
-                    walls.Length = commandArgs[2].ToInt();
-                    walls.Height = commandArgs[3].ToInt();
-                    walls.Block = commandArgs[4];
-                    walls.X = position.X;
-                    walls.Y = position.Y;
-                    walls.Z = position.Z;
-                    break;
-                case 6:
-
-                    walls.Width = commandArgs[1].ToInt();
-                    walls.Length = commandArgs[2].ToInt();
-                    walls.Height = commandArgs[3].ToInt();
-                    walls.Block = commandArgs[4];
-                    var center = savedPositions.Single(a => a.Name.Equals(commandArgs[5])).Position;
-                    walls.X = center.X;
-                    walls.Y = center.Y;
-                    walls.Z = center.Z;
-                    break;
-                case 8:
-
-                    walls.Width = commandArgs[1].ToInt();
-                    walls.Length = commandArgs[2].ToInt();
-                    walls.Height = commandArgs[3].ToInt();
-                    walls.Block = commandArgs[4];
-                    walls.X = commandArgs[5].ToInt();
-                    walls.Y = commandArgs[6].ToInt();
-                    walls.Z = commandArgs[7].ToInt();
-                    break;
-                default:
-                    var help = "\nCREATE BOX\n" +
-                               "create box length width height block - center at current position\n" +
-                               "create box length width height block [named position]\n" +
-                               "create box length width height block x y z";
-                    commandService.Status(help);
-                    return new List<Line>();
-            }
-            IGenerator generator = new BoxGenerator();
-            lines = generator.Run((Options)walls);
-            return lines;
-        }
-
-        private static List<Line> CreateOutline(IMinecraftCommandService commandService, string[] commandArgs, Position position, List<SavedPosition> savedPositions,
-            List<Line> lines)
-        {
-            ISquareOptions walls = new Options();
-            walls.Fill = false;
-            switch (commandArgs.Length)
-            {
-                // width height block [postition]
-                case 5:
-                    walls.Width = commandArgs[1].ToInt();
-                    walls.Length = commandArgs[2].ToInt();
-                    walls.Height = commandArgs[3].ToInt();
-                    walls.Block = commandArgs[4];
-                    walls.X = position.X;
-                    walls.Y = position.Y;
-                    walls.Z = position.Z;
-                    break;
-                case 6:
-
-                    walls.Width = commandArgs[1].ToInt();
-                    walls.Length = commandArgs[2].ToInt();
-                    walls.Height = commandArgs[3].ToInt();
-                    walls.Block = commandArgs[4];
-                    var center = savedPositions.Single(a => a.Name.Equals(commandArgs[5])).Position;
-                    walls.X = center.X;
-                    walls.Y = center.Y;
-                    walls.Z = center.Z;
-                    break;
-                case 8:
-
-                    walls.Width = commandArgs[1].ToInt();
-                    walls.Length = commandArgs[2].ToInt();
-                    walls.Height = commandArgs[3].ToInt();
-                    walls.Block = commandArgs[4];
-                    walls.X = commandArgs[5].ToInt();
-                    walls.Y = commandArgs[6].ToInt();
-                    walls.Z = commandArgs[7].ToInt();
-                    break;
-                default:
-                    var help = "\nCREATE OUTLINE\n" +
-                               "create outline length width height block - center at current position\n" +
-                               "create outline length width height block [named position]\n" +
-                               "create outline length width height block x y z";
-                    commandService.Status(help);
-                    return new List<Line>();
-            }
-            IGenerator generator = new BoxGenerator();
-            lines = generator.Run((Options)walls);
-            return lines;
-        }
-
-        private static int GetAbsolutePosition(int absolute, string relative)
-        {
-            // nothing passed as value
-            if (string.IsNullOrEmpty(relative) || relative.Equals("~")) return absolute;
-            // value is fixed location
-            if (!relative.StartsWith("~")) return Convert.ToInt32(relative);
-            // value is relative position
-            return absolute + Convert.ToInt32(relative.Substring(1));
-        }
-
-        private static Position GetAbsolutePosition(Position absolutePosition, IEnumerable<string> relativePosition)
-        {
-            return relativePosition == null ? absolutePosition :
-                new Position(GetAbsolutePosition(absolutePosition.X, relativePosition.ElementAtOrDefault(0)),
-                    GetAbsolutePosition(absolutePosition.Y, relativePosition.ElementAtOrDefault(1)),
-                    GetAbsolutePosition(absolutePosition.Z, relativePosition.ElementAtOrDefault(2)));
-        }
-
-        private static List<Line> CreateWalls(IMinecraftCommandService commandService, string[] commandArgs, Position position, List<SavedPosition> savedPositions,
-            List<Line> lines)
-        {
-            ISquareOptions walls = new Options();
-            walls.Fill = false;
+            ISquareOptions box = new Options {Fill = fill};
+            var command = commandArgs[0].ToLowerInvariant();
+            commandArgs = ProcessFillArgument(commandArgs, (Options)box);
 
             var location = position;
             switch (commandArgs.Length)
             {
-                // width height block [postition]
+                // width(X) length(Z) height(Y) block [postition]
                 case 5:
-                    walls.Width = commandArgs[1].ToInt();
-                    walls.Length = commandArgs[2].ToInt();
-                    walls.Height = commandArgs[3].ToInt();
-                    walls.Block = commandArgs[4];
+                    box.Width = commandArgs[1].ToInt();
+                    box.Length = commandArgs[2].ToInt();
+                    box.Height = commandArgs[3].ToInt();
+                    box.Block = commandArgs[4];
                     break;
-                case 6:
+                case 6: // width(X) length(Z) height(Y) block savedposition
+                case 8: // width(X) length(Z) height(Y) block x y z
+                    box.Width = commandArgs[1].ToInt();
+                    box.Length = commandArgs[2].ToInt();
+                    box.Height = commandArgs[3].ToInt();
+                    box.Block = commandArgs[4];
+                    location = location.GetAbsolutePosition(commandArgs.Skip(5).Take(3), savedPositions);
+                    break;
+                default:
+                    var help = $"\nCREATE {command.ToUpper()} - {(fill ? "filled" : "not filled")} by default\n" +
+                               $"create {command} [fill|nofill] width(X) length(Z) height(Y) block - center at current position\n" +
+                               $"create {command} [fill|nofill] width(X) length(Z) height(Y) block [named position]\n" +
+                               $"create {command} [fill|nofill] width(X) length(Z) height(Y) block [x y z]";
 
+                    commandService.Status(help);
+                    return new List<Line>();
+            }
+
+            box.Start = location.ToPoint();
+            IGenerator generator = new BoxGenerator();
+            return generator.Run((Options) box);
+        }
+
+        private static List<Line> CreateWalls(IMinecraftCommandService commandService, string[] commandArgs,
+            Position position, List<SavedPosition> savedPositions)
+        {
+            ISquareOptions walls = new Options{Fill = false, Thickness = 1};
+            var location = position;
+            switch (commandArgs.Length)
+            {
+                case 5: // width(X) length(Z) height(Y) block @ current position
                     walls.Width = commandArgs[1].ToInt();
                     walls.Length = commandArgs[2].ToInt();
                     walls.Height = commandArgs[3].ToInt();
                     walls.Block = commandArgs[4];
-                    location = savedPositions.Single(a => a.Name.Equals(commandArgs[5])).Position;
                     break;
-                case 8:
+                case 6: // width(X) length(Z) height(Y) block savedposition
+                case 7: // width(X) length(Z) height(Y) block savedposition thickness
+                case 8: // width(X) length(Z) height(Y) block x y z
+                case 9: // width(X) length(Z) height(Y) block x y z thickness
                     walls.Width = commandArgs[1].ToInt();
                     walls.Length = commandArgs[2].ToInt();
                     walls.Height = commandArgs[3].ToInt();
                     walls.Block = commandArgs[4];
-                    location = GetAbsolutePosition(position, commandArgs.Skip(5).Take(3));
-                    walls.Thickness = 1;
-                    break;
-                case 9:
-                    walls.Width = commandArgs[1].ToInt();
-                    walls.Length = commandArgs[2].ToInt();
-                    walls.Height = commandArgs[3].ToInt();
-                    walls.Block = commandArgs[4];
-                    location = GetAbsolutePosition(position, commandArgs.Skip(5).Take(3));
-                    walls.Thickness = commandArgs[8].ToInt();
+                    location = location.GetAbsolutePosition(commandArgs.Skip(5).Take(3), savedPositions);
+                    walls.Thickness = (commandArgs.ElementAtOrDefault(commandArgs.Length == 7 ? 6 : 8) ?? "1").ToInt();
                     break;
                 default:
                     var help = "\nCREATE WALLS\n" +
-                               "create walls  length width height block - center at current position\n" +
-                               "create walls length width height block [named position]\n" +
-                               "create walls length width height block x y z";
+                               "create walls width(X) length(Z) height(Y) block - defaults to center at current position, thickness 1\n" +
+                               "create walls width(X) length(Z) height(Y) block [named position] [thickness]\n" +
+                               "create walls width(X) length(Z) height(Y) block [x y z] [thickness]";
                     commandService.Status(help);
                     return new List<Line>();
             }
 
-            walls.X = location.X;
-            walls.Y = location.Y;
-            walls.Z = location.Z;
+            walls.Start = location.ToPoint();
             IGenerator generator = new SquareGenerator();
-            lines = generator.Run((Options)walls);
-            return lines;
+            return generator.Run((Options) walls);
         }
 
-        private static List<Line> CreateCircle(IMinecraftCommandService commandService, string[] commandArgs, Position position, List<SavedPosition> savedPositions,
-            List<Line> lines)
+        private static List<Line> CreateCircle(IMinecraftCommandService commandService, string[] commandArgs,
+            Position position, List<SavedPosition> savedPositions)
         {
-            ICircleOptions circle = new Options();
-            circle.Fill = true;
+            ICircleOptions circle = new Options {Fill = true};
+            var location = position;
             switch (commandArgs.Length)
             {
-                // radius height block [position]
+                // radius height(Y) block [position]
                 case 4:
                     circle.Radius = commandArgs[1].ToInt();
                     circle.Height = commandArgs[2].ToInt();
                     circle.Block = commandArgs[3];
-
-                    circle.X = position.X;
-                    circle.Y = position.Y;
-                    circle.Z = position.Z;
                     break;
 
-                // radius height block position
-                case 5:
+
+                case 5: // radius height(Y) block savedposition
+                case 7: // radius height(Y) block x y z
                     circle.Radius = commandArgs[1].ToInt();
                     circle.Height = commandArgs[2].ToInt();
                     circle.Block = commandArgs[3];
-                    var center = savedPositions.Single(a => a.Name.Equals(commandArgs[4])).Position;
-                    circle.X = center.X;
-                    circle.Y = center.Y;
-                    circle.Z = center.Z;
-                    break;
-                // radius height block x y z
-                case 7:
-                    circle.Radius = commandArgs[1].ToInt();
-                    circle.Height = commandArgs[2].ToInt();
-                    circle.Block = commandArgs[3];
-                    circle.X = commandArgs[4].ToInt();
-                    circle.Y = commandArgs[5].ToInt();
-                    circle.Z = commandArgs[6].ToInt();
+                    location = location.GetAbsolutePosition(commandArgs.Skip(4).Take(3), savedPositions);
                     break;
                 default:
                     var help = "\nCREATE CIRCLE\n" +
-                               "create circle radius height block - center at current position\n" +
-                               "create circle radius height block [named position]\n" +
-                               "create circle radius height block x y z";
+                               "create circle radius height(Y) block - center at current position\n" +
+                               "create circle radius height(Y) block [named position]\n" +
+                               "create circle radius height(Y) block x y z";
                     commandService.Status(help);
 
                     return new List<Line>();
             }
+
+            circle.Start = location.ToPoint();
             IGenerator generator = new CircleGenerator();
-            lines = generator.Run((Options)circle);
-            return lines;
+            return generator.Run((Options) circle);
         }
 
-        private static List<Line> CreateSphere(IMinecraftCommandService commandService, string[] commandArgs, Position position, List<SavedPosition> savedPositions,
-            List<Line> lines)
+        private static List<Line> CreateSphere(IMinecraftCommandService commandService, string[] commandArgs,
+            Position position, List<SavedPosition> savedPositions)
         {
             ISphereOptions sphere = new Options();
-
+            var location = position;
             switch (commandArgs.Length)
             {
-                // radius height block [position]
-                case 3:
+                case 3: // radius height(Y) block @ current position
                     sphere.Radius = commandArgs[1].ToInt();
-                    //sphere.Height = commandArgs[2].ToInt();
                     sphere.Block = commandArgs[2];
-
-                    sphere.X = position.X;
-                    sphere.Y = position.Y;
-                    sphere.Z = position.Z;
                     break;
-
-                // radius height block position
-                case 4:
+                case 4: // radius height(Y) block savedposition
+                case 6: // radius height(Y) block x y z
                     sphere.Radius = commandArgs[1].ToInt();
-                    //sphere.Height = commandArgs[2].ToInt();
                     sphere.Block = commandArgs[2];
-                    var center = savedPositions.Single(a => a.Name.Equals(commandArgs[3])).Position;
-                    sphere.X = center.X;
-                    sphere.Y = center.Y;
-                    sphere.Z = center.Z;
-                    break;
-                // radius height block x y z
-                case 6:
-                    sphere.Radius = commandArgs[1].ToInt();
-                    //sphere.Height = commandArgs[2].ToInt();
-                    sphere.Block = commandArgs[2];
-                    sphere.X = commandArgs[3].ToInt();
-                    sphere.Y = commandArgs[4].ToInt();
-                    sphere.Z = commandArgs[5].ToInt();
+                    location = location.GetAbsolutePosition(commandArgs.Skip(3).Take(3), savedPositions);
                     break;
                 default:
                     commandService.Status("\nCREATE SPHERE\n" +
-                                      "create sphere radius block - current postion\n" +
-                                      "create sphere radius block [named position]\n" +
-                                      "create sphere raidus block x y z");
+                                          "create sphere radius block - current postion\n" +
+                                          "create sphere radius block [named position]\n" +
+                                          "create sphere raidus block x y z");
                     return new List<Line>();
             }
+
+            sphere.Start = location.ToPoint();
             IGenerator generator = new SphereGenerator();
-            lines = generator.Run((Options)sphere);
-            return lines;
+            return generator.Run((Options) sphere);
         }
 
-        private static List<Line> CreateRing(IMinecraftCommandService commandService, string[] commandArgs, Position position, List<SavedPosition> savedPositions,
-            List<Line> lines)
+        private static List<Line> CreateRing(IMinecraftCommandService commandService, string[] commandArgs,
+            Position position, List<SavedPosition> savedPositions)
         {
-            ICircleOptions ring = new Options();
-            ring.Fill = false;
+            ICircleOptions ring = new Options {Fill = false};
+            var location = position;
             switch (commandArgs.Length)
             {
-                case 3:
-                    //radius height block
+                case 3: // radius block @ current position & height=1
+                    ring.Radius = commandArgs[1].ToInt();
                     ring.Block = commandArgs[2];
-                    ring.Radius = commandArgs[1].ToInt();
                     ring.Height = 1;
-                    ring.X = position.X;
-                    ring.Y = position.Y;
-                    ring.Z = position.Z;
                     break;
-                // radius height block [position]
-                case 4:
-                    ring.Block = commandArgs[3];
+                case 4: // radius height(Y) block @ current position
                     ring.Radius = commandArgs[1].ToInt();
                     ring.Height = commandArgs[2].ToInt();
-                    ring.X = position.X;
-                    ring.Y = position.Y;
-                    ring.Z = position.Z;
-                    break;
-
-                // radius height block position
-                case 5:
                     ring.Block = commandArgs[3];
-                    var center = savedPositions.Single(a => a.Name.Equals(commandArgs[4])).Position;
+                    break;
+                case 5: // radius height(Y) block savedposition
+                case 7: // radius height(Y) block x y z
                     ring.Radius = commandArgs[1].ToInt();
                     ring.Height = commandArgs[2].ToInt();
-                    ring.X = center.X;
-
-                    ring.Y = center.Y;
-                    ring.Z = center.Z;
-                    break;
-                // radius height block x y z
-                case 7:
                     ring.Block = commandArgs[3];
-                    ring.Radius = commandArgs[1].ToInt();
-                    ring.Height = commandArgs[2].ToInt();
-                    ring.X = commandArgs[4].ToInt();
-                    ring.Y = commandArgs[5].ToInt();
-                    ring.Z = commandArgs[6].ToInt();
+                    location = location.GetAbsolutePosition(commandArgs.Skip(4).Take(3), savedPositions);
                     break;
                 default:
                     commandService.Status("\nCREATE RING\n" +
                                           "create ring radius block\n" +
-                                          "create ring radius height block - current position\n" +
-                                          "create ring radius height block [named position]\n" +
-                                          "create ring radius height block x y z");
+                                          "create ring radius height(Y) block - current position\n" +
+                                          "create ring radius height(Y) block [named position]\n" +
+                                          "create ring radius height(Y) block x y z");
                     return new List<Line>();
             }
+
+            ring.Start = location.ToPoint();
             IGenerator generator = new RingGenerator();
-            lines = generator.Run((Options)ring);
-            return lines;
+            return generator.Run((Options) ring);
         }
 
-        private static List<Line> CreateTriangle(IMinecraftCommandService commandService, string[] commandArgs, Position position, List<SavedPosition> savedPositions,
-            List<Line> lines)
+        private static List<Line> CreateTriangle(IMinecraftCommandService commandService, string[] commandArgs,
+            Position position, List<SavedPosition> savedPositions)
         {
-            IPolygonOptions triangle = new Options();
-            triangle.Fill = false;
-            if (commandArgs[1].Equals("fill", System.StringComparison.InvariantCultureIgnoreCase))
-            {
-                commandArgs = commandArgs.Skip(1).ToArray();
-                triangle.Fill = true;
-            }
+            IPolygonOptions triangle = new Options { Fill = false };
+            var location = position;
+            commandArgs = ProcessFillArgument(commandArgs, (Options)triangle);
+
             switch (commandArgs.Length)
             {
-                case 3:
-                    //radius block
-                    triangle.Block = commandArgs[2];
+                case 3: // radius block @ current position & height=1
                     triangle.Radius = commandArgs[1].ToInt() / 2;
+                    triangle.Block = commandArgs[2];
                     triangle.Height = 1;
-                    triangle.X = position.X;
-                    triangle.Y = position.Y;
-                    triangle.Z = position.Z;
                     break;
-                // radius height block [position]
-                case 4:
-                    triangle.Block = commandArgs[3];
-                    triangle.Radius = commandArgs[1].ToInt()/2;
+                case 4: // radius height(Y) block @ current position
+                    triangle.Radius = commandArgs[1].ToInt() / 2;
                     triangle.Height = commandArgs[2].ToInt();
-                    triangle.X = position.X;
-                    triangle.Y = position.Y;
-                    triangle.Z = position.Z;
+                    triangle.Block = commandArgs[3];
                     break;
-
-                // radius height block position
-                case 5:
-                    triangle.Block = commandArgs[3];
-                    var center = savedPositions.Single(a => a.Name.Equals(commandArgs[4])).Position;
-                    triangle.Radius = commandArgs[1].ToInt()/2;
+                case 5: // radius height(Y) block savedposition
+                case 7: // radius height(Y) block x y z
+                    triangle.Radius = commandArgs[1].ToInt() / 2;
                     triangle.Height = commandArgs[2].ToInt();
-                    triangle.X = center.X; 
-
-                    triangle.Y = center.Y;
-                    triangle.Z = center.Z;
-                    break;
-                // radius height block x y z
-                case 7:
                     triangle.Block = commandArgs[3];
-                    triangle.Radius = commandArgs[1].ToInt()/2;
-                    triangle.Height = commandArgs[2].ToInt();
-                    triangle.X = commandArgs[4].ToInt();
-                    triangle.Y = commandArgs[5].ToInt();
-                    triangle.Z = commandArgs[6].ToInt();
+                    location = location.GetAbsolutePosition(commandArgs.Skip(4).Take(3), savedPositions);
                     break;
                 default:
                     commandService.Status("\nCREATE TRIANGLE\n" +
                                           "create triangle [fill] radius block\n" +
-                                          "create triangle [fill] radius height block - current position\n" +
-                                          "create triangle [fill] radius height block [named position]\n" +
-                                          "create triangle [fill] radius height block x y z");
+                                          "create triangle [fill] radius height(Y) block - current position\n" +
+                                          "create triangle [fill] radius height(Y) block [named position]\n" +
+                                          "create triangle [fill] radius height(Y) block x y z");
                     return new List<Line>();
             }
 
+            triangle.Start = location.ToPoint();
             triangle.Sides = 3;
             triangle.Steps = 3;
             triangle.StartingAngle = 0;
 
             IGenerator generator = new PolygonGenerator();
-            lines = generator.Run((Options)triangle);
-            return lines;
+            return generator.Run((Options) triangle);
         }
 
-        private static List<Line> CreatePoly(IMinecraftCommandService commandService, string[] commandArgs, Position position, List<SavedPosition> savedPositions,
-            List<Line> lines)
+        private static List<Line> CreatePoly(IMinecraftCommandService commandService, string[] commandArgs,
+            Position position, List<SavedPosition> savedPositions)
         {
-            IPolygonOptions poly = new Options();
-            poly.Fill = false;
+            IPolygonOptions poly = new Options { Fill = false };
+            var location = position;
 
-            if (commandArgs[1].Equals("fill", System.StringComparison.InvariantCultureIgnoreCase))
+            commandArgs = ProcessFillArgument(commandArgs, (Options)poly);
+
+            if (commandArgs.Count() > 3)
             {
-                commandArgs = commandArgs.Skip(1).ToArray();
-                poly.Fill = true;
+                poly.StartingAngle = commandArgs[1].ToInt();
+                poly.Sides = commandArgs[2].ToInt();
+                poly.Steps = commandArgs[3].ToInt();
             }
 
-            poly.StartingAngle = commandArgs[1].ToInt();
-            poly.Sides = commandArgs[2].ToInt();
-            poly.Steps = commandArgs[3].ToInt();
             commandArgs = commandArgs.Skip(4).ToArray();
-            
             switch (commandArgs.Length)
             {
-                case 2:
-                    //radius block
+                case 2: // radius block @ current position & height=1
                     poly.Block = commandArgs[1];
                     poly.Radius = commandArgs[0].ToInt();
                     poly.Height = 1;
-                    poly.X = position.X;
-                    poly.Y = position.Y;
-                    poly.Z = position.Z;
                     break;
-                // radius height block [position]
-                case 3:
+                case 3: // radius height(Y) block @ current position
                     poly.Block = commandArgs[2];
                     poly.Radius = commandArgs[0].ToInt();
                     poly.Height = commandArgs[1].ToInt();
-                    poly.X = position.X;
-                    poly.Y = position.Y;
-                    poly.Z = position.Z;
                     break;
-
-                // radius height block position
-                case 4:
-                    poly.Block = commandArgs[2];
-                    var center = savedPositions.Single(a => a.Name.Equals(commandArgs[4])).Position;
+                case 4: // radius height(Y) block savedposition
+                case 6: // radius height(Y) block x y z
                     poly.Radius = commandArgs[0].ToInt();
                     poly.Height = commandArgs[1].ToInt();
-                    poly.X = center.X;
-
-                    poly.Y = center.Y;
-                    poly.Z = center.Z;
-                    break;
-                // radius height block x y z
-                case 6:
                     poly.Block = commandArgs[2];
-                    poly.Radius = commandArgs[0].ToInt();
-                    poly.Height = commandArgs[1].ToInt();
-                    poly.X = commandArgs[3].ToInt();
-                    poly.Y = commandArgs[4].ToInt();
-                    poly.Z = commandArgs[5].ToInt();
+                    location = location.GetAbsolutePosition(commandArgs.Skip(3).Take(3), savedPositions);
                     break;
                 default:
                     commandService.Status("\nCREATE POLY\n" +
                                           "create poly [fill] startingAngle sides steps radius block\n" +
-                                          "create poly [fill] startingAngle sides steps radius height block - current position\n" +
-                                          "create poly [fill] startingAngle sides steps radius height block [named position]\n" +
-                                          "create poly [fill] startingAngle sides steps radius height block x y z");
+                                          "create poly [fill] startingAngle sides steps radius height(Y) block - current position\n" +
+                                          "create poly [fill] startingAngle sides steps radius height(Y) block [named position]\n" +
+                                          "create poly [fill] startingAngle sides steps radius height(Y) block x y z");
                     return new List<Line>();
             }
 
-            
-            
-
+            poly.Start = location.ToPoint();
             IGenerator generator = new PolygonGenerator();
-            lines = generator.Run((Options)poly);
-            return lines;
+            return generator.Run((Options) poly);
+        }
+
+        private static string[] ProcessFillArgument(string[] commandArgs, Options options)
+        {
+            var arg = commandArgs.ElementAtOrDefault(1).ToLowerInvariant();
+            switch (arg)
+            {
+                case "fill":
+                case "true":
+                    options.Fill = true;
+                    return commandArgs.Skip(1).ToArray();
+                case "nofill":
+                case "false":
+                    options.Fill = false;
+                    return commandArgs.Skip(1).ToArray();
+                default:
+                    return commandArgs;
+            }
         }
     }
 }

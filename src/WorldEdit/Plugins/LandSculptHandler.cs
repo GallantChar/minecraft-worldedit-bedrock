@@ -15,7 +15,7 @@ namespace WorldEdit
             var position = minecraftService.GetLocation();
             for (var i = 0; i <= RadiusHandler.Radius; i++)
             {
-                CreateHandler.CreateGeometry(minecraftService,"create","circle",$"{i}","1","air",$"{position.X}",$"{position.Y+i}",$"{position.Z}");
+                CreateHandler.CreateGeometry(minecraftService, null, "create","circle",$"{i}","1","air",$"{position.X}",$"{position.Y+i}",$"{position.Z}");
                 //minecraftService.Command($"fill ~-{i} ~{i} ~-{i} ~{i} ~{i} ~{i} air");
             }
         }

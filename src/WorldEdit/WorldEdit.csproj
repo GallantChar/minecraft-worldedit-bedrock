@@ -82,6 +82,7 @@
     <Compile Include="Plugins\Geometry\Generators\Maze\MazeGenerator.cs" />
     <Compile Include="Plugins\Geometry\Generators\Polygon\IPolygonOptions.cs" />
     <Compile Include="Plugins\Geometry\Generators\Polygon\PolygonGenerator.cs" />
+    <Compile Include="Plugins\Geometry\Model\PositionExtension.cs" />
     <Compile Include="Plugins\Geometry\Patterns\ITransformer.cs" />
     <Compile Include="Plugins\Geometry\Patterns\WhiteVillage.cs" />
     <Compile Include="Plugins\Geometry\Patterns\CastleWithVines.cs" />
@@ -137,9 +138,7 @@
     </Content>
     <None Include="packages.config" />
   </ItemGroup>
-  <ItemGroup>
-    <Folder Include="Plugins\Geometry\Generators\Rectangle\" />
-  </ItemGroup>
+  <ItemGroup />
   <ItemGroup>
     <ProjectReference Include="..\WebsocketServer\MinecraftPluginServer.csproj">
       <Project>{b03c6d98-4542-4724-9ea4-9b7cee20f611}</Project>

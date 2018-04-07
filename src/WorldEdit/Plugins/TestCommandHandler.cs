@@ -6,7 +6,8 @@ namespace WorldEdit
     {
         public TestCommandHandler()
         {
-            ChatCommand = "thaw";
+            ChatCommand = "test";
+            ChatCommandDescription = "Test Command Execution";
         }
 
         public override void HandleMessage(IEnumerable<string> args)
