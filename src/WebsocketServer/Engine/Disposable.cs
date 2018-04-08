@@ -5,7 +5,7 @@ namespace WorldEdit
 {
     public class Disposable : IDisposable
     {
-        private readonly Process _process;
+        private Process _process;
 
         public Disposable(Process process)
         {
@@ -14,6 +14,13 @@ namespace WorldEdit
 
         public void Dispose()
         {
+            Dispose(true);
+            GC.SuppressFinalize(this);
+        }
+
+        protected virtual void Dispose(bool disposing)
+        {
+            if (!disposing) return;
             var pid = _process?.Id;
             if (pid != null)
             {
@@ -21,6 +28,8 @@ namespace WorldEdit
             }
 
             _process?.CloseMainWindow();
+            _process?.Dispose();
+            _process = null;
         }
     }
 }

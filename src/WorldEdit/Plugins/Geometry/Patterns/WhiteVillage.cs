@@ -15,8 +15,6 @@ namespace ShapeGenerator.Generators.Patterns
             Blocks.Add(new WeightedBlock("concrete 0", 10));
         }
         
-        private static int[,,] pattern;
-
         static WhiteVillage()
         {
            
@@ -28,29 +26,28 @@ namespace ShapeGenerator.Generators.Patterns
             return currentPoint.BlockName;
         }
 
-        public void transform(List<Point> points)
+        public void Transform(List<Point> points)
         {
-            var source = points.Where(p=>p.BlockName == Name)
-                                    .OrderBy(a => a.Y).ThenBy(a => a.X).ThenBy(a => a.Z).ToList();
-
+            var blocks = points.Where(p => p.BlockName == Name);
+            if (!blocks.Any()) return;
+            var source = blocks.OrderBy(a => a.Y).ThenBy(a => a.X).ThenBy(a => a.Z).ToList();
             var bottom = points.Min(a => a.Y)-1;
             var minX = points.Min(a => a.X);
             var minZ = points.Min(a => a.Z);
 
             foreach (var point in source)
             {
-                var left = points.FirstOrDefault(b => b.X == point.X - 1 && b.Y == point.Y && b.Z == point.Z);
+                var left = blocks.FirstOrDefault(b => b.X == point.X - 1 && b.Y == point.Y && b.Z == point.Z);
                 if (left != null && IsAir(left)) left = null;
-                var right = points.FirstOrDefault(b => b.X == point.X + 1 && b.Y == point.Y && b.Z == point.Z);
+                var right = blocks.FirstOrDefault(b => b.X == point.X + 1 && b.Y == point.Y && b.Z == point.Z);
                 if (right != null && IsAir(right)) right = null;
-                var front = points.FirstOrDefault(b => b.X == point.X && b.Y == point.Y && b.Z == point.Z + 1);
+                var front = blocks.FirstOrDefault(b => b.X == point.X && b.Y == point.Y && b.Z == point.Z + 1);
                 if (front != null && IsAir(front)) front = null;
-                var back = points.FirstOrDefault(b => b.X == point.X && b.Y == point.Y && b.Z == point.Z - 1);
+                var back = blocks.FirstOrDefault(b => b.X == point.X && b.Y == point.Y && b.Z == point.Z - 1);
                 if (back != null && IsAir(back)) back = null;
 
                 var corner = (left == null || right == null) && (front == null || back == null);
                 var side = left == null || right == null || front == null || back == null;
-
                 
                 if (corner)
                 {

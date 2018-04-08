@@ -47,8 +47,18 @@ namespace MinecraftPluginServer
 
         public void Dispose()
         {
-            if (wssv != null && wssv.IsListening)
-                wssv.Stop();
+            Dispose(true);
+            GC.SuppressFinalize(this);
+        }
+
+        protected virtual void Dispose(bool disposing)
+        {
+            if (disposing)
+            {
+                // free managed resources  
+                if (wssv != null && wssv.IsListening)
+                    wssv.Stop();
+            }
         }
 
         private void OnError(ErrorEventArgs obj)

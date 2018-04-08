@@ -1086,7 +1086,8 @@ namespace WorldEdit.Schematic
                 BeData = 0,
                 JeData = 0,
                 FriendlyName = "Torch",
-                HasDirection = true
+                HasDirection = true,
+                SortOrder = 20
             });
             output.Add(new BlockLookup {Id = 51, Name = "fire", BeData = 0, JeData = 0, FriendlyName = "Fire"});
             output.Add(new BlockLookup
@@ -1113,7 +1114,8 @@ namespace WorldEdit.Schematic
                 Name = "redstone_wire",
                 BeData = 0,
                 JeData = 0,
-                FriendlyName = "Redstone Wire"
+                FriendlyName = "Redstone Wire",
+                SortOrder = 15
             });
             output.Add(new BlockLookup
             {
@@ -1613,7 +1615,16 @@ namespace WorldEdit.Schematic
                 JeData = 0,
                 FriendlyName = "Melon Stem"
             });
-            output.Add(new BlockLookup {Id = 106, Name = "vine", BeData = 0, JeData = 0, FriendlyName = "Vines"});
+            output.Add(new BlockLookup
+            {
+                Id = 106,
+                Name = "vine",
+                BeData = 0,
+                JeData = 0,
+                FriendlyName = "Vines",
+                SortOrder = 15,
+                HasDirection = true
+            });
             output.Add(new BlockLookup
             {
                 Id = 107,

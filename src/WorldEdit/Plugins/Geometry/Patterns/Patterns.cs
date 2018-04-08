@@ -29,7 +29,9 @@ namespace ShapeGenerator.Generators.Patterns
         {
             transformers = new Dictionary<string, ITransformer>
             {
-                {WhiteVillage.Name, new WhiteVillage()}
+                {WhiteVillage.Name, new WhiteVillage()}, //place outline wood
+                {Castle.Name, new Castle()},
+                {CastleWithVines.Name, new CastleWithVines() }
             };
         }
 
@@ -37,9 +39,9 @@ namespace ShapeGenerator.Generators.Patterns
         {
             blocks = new Dictionary<string, IPattern>
             {
-                {Castle.Name, new Castle()},
-                {CastleWithVines.Name, new CastleWithVines() },
-                {WhiteVillage.Name, new WhiteVillage()}
+                //{Castle.Name, new Castle()},
+                //{CastleWithVines.Name, new CastleWithVines() },
+                {WhiteVillage.Name, new WhiteVillage()} // place concrete
             };
         }
 

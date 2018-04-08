@@ -5,13 +5,19 @@ namespace ShapeGenerator
 {
     public class Line
     {
+        public Line()
+        {
+            Order = 0;
+        }
+
         public Point Start { get; set; }
         public Point End { get; set; }
         public string Block { get; set; }
+        public int Order { get; set; }
 
         public bool CanCombine(Line line)
         {
-            if (line.Block.Equals(Block))
+            if (line.Block.Equals(Block) && line.Order == Order)
             {
                 //combine the Z
                 if (line.Start.X == Start.X && line.Start.Y == Start.Y)
@@ -54,12 +60,8 @@ namespace ShapeGenerator
         {
             if (CanCombine(line))
             {
-                return new Line
-                {
-                    Start = Start.Clone(),
-                    End = line.End.Clone(),
-                    Block = Block
-                };
+                End = line.End.Clone();
+                return this;
             }
             throw new InvalidOperationException("lines cannot be combined");
         }

@@ -8,6 +8,6 @@ namespace ShapeGenerator.Generators.Patterns
 {
     public interface ITransformer
     { 
-        void transform(List<Point> points);
+        void Transform(List<Point> points);
     }
 }

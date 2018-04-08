@@ -10,10 +10,24 @@ namespace ShapeGenerator
         public int Z { get; set; }
 
         public string BlockName { get; set; }
+        public int Order { get; set; }
 
-        public Point Clone()
+        public Point()
         {
-            return new Point { X = X, Y = Y, Z = Z };
+            Order = 0;
+        }
+        public Point(int x, int y, int z, string block = null)
+        {
+            Order = 0;
+            X = x;
+            Y = y;
+            Z = z;
+            BlockName = block;
+        }
+
+        public Point Clone(int increaseOrder=0)
+        {
+            return new Point { X = X, Y = Y, Z = Z, Order = Order + increaseOrder, BlockName = BlockName };
         }
         private static double Distance(int centerX, int centerZ, int centerY, int x, int z, int y)
         {

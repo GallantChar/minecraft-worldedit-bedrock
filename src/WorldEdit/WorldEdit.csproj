@@ -83,9 +83,9 @@
     <Compile Include="Plugins\Geometry\Generators\Polygon\IPolygonOptions.cs" />
     <Compile Include="Plugins\Geometry\Generators\Polygon\PolygonGenerator.cs" />
     <Compile Include="Plugins\Geometry\Model\PositionExtension.cs" />
+    <Compile Include="Plugins\Geometry\Patterns\CastlWithVines.cs" />
     <Compile Include="Plugins\Geometry\Patterns\ITransformer.cs" />
     <Compile Include="Plugins\Geometry\Patterns\WhiteVillage.cs" />
-    <Compile Include="Plugins\Geometry\Patterns\CastleWithVines.cs" />
     <Compile Include="Plugins\Geometry\Patterns\Castle.cs" />
     <Compile Include="Plugins\Geometry\Patterns\IPattern.cs" />
     <Compile Include="Plugins\Geometry\Patterns\WeightedBlock.cs" />
