@@ -182,6 +182,11 @@ namespace WorldEdit.Schematic
             // var service = new MinecraftCodeConnectionCommandService();
             var sw = new Stopwatch();
 
+            if (points == null || !points.Any())
+            {
+                _commandService.Status("schematic was unable to load");
+            }
+
             _commandService.Status("preparing schematic");
 
             if (clip != null)
