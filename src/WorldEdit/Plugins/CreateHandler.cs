@@ -67,6 +67,9 @@ namespace WorldEdit
                 case "maze":
                     lines = CreateMaze(commandService, commandArgs, position, savedPositions);
                     break;
+                case "house":
+                    lines = CreateHouse(commandService, commandArgs, position, savedPositions);
+                    break;
                 case "triangle":
                     lines = CreateTriangle(commandService, commandArgs, position, savedPositions);
                     break;
@@ -201,6 +204,37 @@ namespace WorldEdit
             maze.Start = location.ToPoint();
             IGenerator generator = new MazeGenerator(commandService);
             return generator.Run((Options)maze);
+        }
+
+        private static List<Line> CreateHouse(IMinecraftCommandService commandService, string[] commandArgs,
+            Position position, List<SavedPosition> savedPositions)
+        {
+            IHouseOptions house = new Options { Fill = false, Thickness = 1, InnerThickness = 3 };
+            var location = position;
+            if (commandArgs.Length >= 2)
+            {
+                commandArgs = commandArgs.Skip(1).ToArray();
+                bool evaluate = true;
+                while (evaluate)
+                {
+                    switch (commandArgs[0])
+                    {
+                        case "floors":
+                            var floors = commandArgs.ElementAtOrDefault(1);
+                            house.Height = floors.ToInt();
+                            commandArgs = commandArgs.Skip(2).ToArray();
+                            break;
+                        default: 
+                            house.Block = commandArgs.Length == 0 ? "stone" : String.Join(" ", commandArgs );
+                            evaluate = false;
+                            break;
+                    }
+                }
+            }
+
+            house.Start = location.ToPoint();
+            IGenerator generator = new HouseGenerator(commandService);
+            return generator.Run((Options)house);
         }
 
         private static List<Line> CreateFloor(IMinecraftCommandService commandService, string[] commandArgs,

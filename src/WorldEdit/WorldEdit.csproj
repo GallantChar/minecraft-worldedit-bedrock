@@ -73,6 +73,15 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Plugins\Geometry\Generators\Circle\RingGenerator.cs" />
+    <Compile Include="Plugins\Geometry\Generators\House\Extensions.cs" />
+    <Compile Include="Plugins\Geometry\Generators\House\House.cs" />
+    <Compile Include="Plugins\Geometry\Generators\House\HouseGenerator.cs" />
+    <Compile Include="Plugins\Geometry\Generators\House\IHouseOptions.cs" />
+    <Compile Include="Plugins\Geometry\Generators\House\IStructureBuilder.cs" />
+    <Compile Include="Plugins\Geometry\Generators\House\Roof.cs" />
+    <Compile Include="Plugins\Geometry\Generators\House\Room.cs" />
+    <Compile Include="Plugins\Geometry\Generators\House\Structure.cs" />
+    <Compile Include="Plugins\Geometry\Generators\House\RoomPoint.cs" />
     <Compile Include="Plugins\Geometry\Generators\IOptions.cs" />
     <Compile Include="Plugins\Geometry\Generators\Generator.cs" />
     <Compile Include="Plugins\Geometry\Generators\Line\FloorGenerator.cs" />
