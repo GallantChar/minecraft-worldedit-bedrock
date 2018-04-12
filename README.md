@@ -1,3 +1,4 @@
+
 # Minecraft World Edit for Windows 10 Bedrock Edition
 
 
@@ -34,6 +35,11 @@ Import Schematics
 |create      | circle  | radius height blockname   |         | |
 |create      | circle  | radius height blockname position            |         | |
 |create      | circle  | radius height blockname x y z        |         | |
+|create      | maze | width(X) length(Z) height(Y) wall-thickness inner-thickness blockname| ||
+|create      | poly | [fill] startingAngle sides steps radius blockname | ||
+|create      | poly | [fill] startingAngle sides steps radius height(Y) blockname | ||
+|create      | poly | [fill] startingAngle sides steps radius height(Y) blockname position | ||
+|create      | poly | [fill] startingAngle sides steps radius height(Y) blockname x y z | ||
 |create      | ring | radius height blockname |         | |
 |create      | ring | radius height blockname position |         | |
 |create      | ring | radius height blockname x y z |         | |
