@@ -1,8 +1,9 @@
 # Minecraft World Edit for Windows 10 Bedrock Edition
 
 
-This is a program that adds World Edit capabilities inside Minecraft. Specifically, it allows you to do three types of operations in the game:
-1. Create geometry in the game. ie Walls, Floors, Boxes, Circles, Rings, and Spheres
+This is a program that adds World Edit capabilities inside Minecraft. Specifically, it allows you to do thre types of operations in the game:
+1. Create:
+   a. Geometry in the game. ie Walls, Floors, Boxes, Circles, Rings, Triangles and Spheres
 2. Save a list of positions(coordinates) in the game so that you can run mulitple create commands on the same coordinate.
 3. Imports Java Edition Schematics into the game.
 4. Creates complex objects using random generation: Maze, House.
