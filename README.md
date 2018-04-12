@@ -1,19 +1,14 @@
+
 # Minecraft World Edit for Windows 10 Bedrock Edition
 
 
 This is a program that adds World Edit capabilities inside Minecraft. Specifically, it allows you to do thre types of operations in the game:
 1. Create:
    a. Geometry in the game. ie Walls, Floors, Boxes, Circles, Rings, Triangles and Spheres
+   b. Randomly generated complex structures, ie Mazes and Houses
 2. Save a list of positions(coordinates) in the game so that you can run mulitple create commands on the same coordinate.
 3. Imports Java Edition Schematics into the game.
-4. Creates complex objects using random generation: Maze, House.
 
-## What can it do?
-Create geometry
-![](geo.jpg)
-
-Import Schematics
-![](schem.jpg)
 ------------------------------------------------
 ## Command List
 | Command | Subcommand | Arguments | Description | Example |
@@ -43,6 +38,9 @@ Import Schematics
 |create      | sphere | radius blockname |         | |
 |create      | sphere | radius blockname position |         | |
 |create      | sphere | radius blockname x y z |         | |
+|create      | triangle | [fill] radius blockname |         | |
+|create      | triangle | [fill] radius blockname position |         | |
+|create      | triangle | [fill] radius blockname x y z |         | |
 |create      | poly | [fill] startingAngle sides steps radius blockname | ||
 |create      | poly | [fill] startingAngle sides steps radius height(Y) blockname | ||
 |create      | poly | [fill] startingAngle sides steps radius height(Y) blockname position | ||
