@@ -1,4 +1,3 @@
-
 # Minecraft World Edit for Windows 10 Bedrock Edition
 
 
@@ -6,6 +5,7 @@ This is a program that adds World Edit capabilities inside Minecraft. Specifical
 1. Create geometry in the game. ie Walls, Floors, Boxes, Circles, Rings, and Spheres
 2. Save a list of positions(coordinates) in the game so that you can run mulitple create commands on the same coordinate.
 3. Imports Java Edition Schematics into the game.
+4. Creates complex objects using random generation: Maze, House.
 
 ## What can it do?
 Create geometry
@@ -13,7 +13,8 @@ Create geometry
 
 Import Schematics
 ![](schem.jpg)
-## How to Use
+------------------------------------------------
+## Command List
 | Command | Subcommand | Arguments | Description | Example |
 |---------|------------|-------------|---------|---------|
 |pos         | add          | name  | Adds the players currect position(coordinates) under the name specified.        | |
@@ -35,24 +36,35 @@ Import Schematics
 |create      | circle  | radius height blockname   |         | |
 |create      | circle  | radius height blockname position            |         | |
 |create      | circle  | radius height blockname x y z        |         | |
-|create      | maze | width(X) length(Z) height(Y) wall-thickness inner-thickness blockname| ||
-|create      | poly | [fill] startingAngle sides steps radius blockname | ||
-|create      | poly | [fill] startingAngle sides steps radius height(Y) blockname | ||
-|create      | poly | [fill] startingAngle sides steps radius height(Y) blockname position | ||
-|create      | poly | [fill] startingAngle sides steps radius height(Y) blockname x y z | ||
 |create      | ring | radius height blockname |         | |
 |create      | ring | radius height blockname position |         | |
 |create      | ring | radius height blockname x y z |         | |
 |create      | sphere | radius blockname |         | |
 |create      | sphere | radius blockname position |         | |
 |create      | sphere | radius blockname x y z |         | |
-|  |           |             |         | |
+|create      | poly | [fill] startingAngle sides steps radius blockname | ||
+|create      | poly | [fill] startingAngle sides steps radius height(Y) blockname | ||
+|create      | poly | [fill] startingAngle sides steps radius height(Y) blockname position | ||
+|create      | poly | [fill] startingAngle sides steps radius height(Y) blockname x y z | ||
+---------------------------
+## Complex Create Commands
+| Command | Subcommand | Arguments | Description | Example |
+|---------|------------|-------------|---------|---------|
+|create      | house |  | ||
+|create      | house | blockname | ||
+|create      | maze | width(X) length(Z) height(Y) wall-thickness inner-thickness blockname | ||
+|create      | maze | width(X) length(Z) height(Y) wall-thickness inner-thickness blockname position | ||
+|create      | maze | width(X) length(Z) height(Y) wall-thickness inner-thickness blockname x y z | ||
+--------------------------------
+## Scehmatic Commands
+| Command | Subcommand | Arguments | Description | Example |
+|---------|------------|-------------|---------|---------|
 |schematic   | list          |             |         | |
 |schematic   | analyze | name             |         | |
 |schematic   | import | name x y z rotation shiftX shiftY shiftZ  |         | |
 
 ## Install
-1. Download worldedit from [releases](https://github.com/The-HeX/mcpe-geometry-generator/releases)
+1. Download worldedit
 2. Run WorldEdit.exe
 3. From within a minecraft chat window type /connect 127.0.0.1:12112 
 4. Start using the commands.
