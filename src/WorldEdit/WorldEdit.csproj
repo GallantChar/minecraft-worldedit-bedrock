@@ -73,6 +73,15 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Plugins\Geometry\Generators\Circle\RingGenerator.cs" />
+    <Compile Include="Plugins\Geometry\Generators\ComplexStructures\Rooms\Bridge.cs" />
+    <Compile Include="Plugins\Geometry\Generators\ComplexStructures\Rooms\CircularRoom.cs" />
+    <Compile Include="Plugins\Geometry\Generators\ComplexStructures\Rooms\Hall.cs" />
+    <Compile Include="Plugins\Geometry\Generators\ComplexStructures\Rooms\Room.cs" />
+    <Compile Include="Plugins\Geometry\Generators\ComplexStructures\Rooms\SprialStaircase.cs" />
+    <Compile Include="Plugins\Geometry\Generators\ComplexStructures\Rooms\SquareRoom.cs" />
+    <Compile Include="Plugins\Geometry\Generators\ComplexStructures\StructureExtensions.cs" />
+    <Compile Include="Plugins\Geometry\Generators\ComplexStructures\Structure.cs" />
+    <Compile Include="Plugins\Geometry\Generators\ComplexStructures\StructurePoint.cs" />
     <Compile Include="Plugins\Geometry\Generators\House\Extensions.cs" />
     <Compile Include="Plugins\Geometry\Generators\House\House.cs" />
     <Compile Include="Plugins\Geometry\Generators\House\HouseGenerator.cs" />
@@ -147,7 +156,9 @@
     </Content>
     <None Include="packages.config" />
   </ItemGroup>
-  <ItemGroup />
+  <ItemGroup>
+    <Folder Include="Plugins\Geometry\Generators\ComplexStructures\Floors\" />
+  </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\WebsocketServer\MinecraftPluginServer.csproj">
       <Project>{b03c6d98-4542-4724-9ea4-9b7cee20f611}</Project>
