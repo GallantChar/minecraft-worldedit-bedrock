@@ -17,7 +17,7 @@ This is a program that adds World Edit capabilities inside Minecraft. Specifical
 |pos         | list         |       | Lists the names and coordinates ( X , Y , Z) of all saved positions. |
 |pos         | remove       | name  | Removes the stored position by it's name. |
 ------------------------------------------------
-## POS Command List
+## Create Command List
 | Command | Subcommand | Arguments | 
 |---------|------------|--------------------------------|
 |create      | box     | width length height block |
